@@ -1,0 +1,22 @@
+{
+  "pages": {
+    "/page": [
+      "static/chunks/3d1f2_next_dist_20af61b6._.js",
+      "static/chunks/SemesterV_DebugMiddleware_debug-middleware_app_favicon_ico_mjs_49804840._.js",
+      "static/chunks/[root-of-the-server]__4d3da49a._.css",
+      "static/chunks/SemesterV_DebugMiddleware_debug-middleware_app_layout_tsx_8a687aa9._.js",
+      "static/chunks/3d1f2_next_dist_client_components_builtin_global-error_c29e33ae.js",
+      "static/chunks/3d1f2_next_dist_d713c665._.js",
+      "static/chunks/SemesterV_DebugMiddleware_debug-middleware_app_page_tsx_c29e33ae._.js",
+      "static/chunks/[turbopack]_browser_dev_hmr-client_hmr-client_ts_d1e6b6d2._.js",
+      "static/chunks/3d1f2_next_dist_compiled_react-dom_aeb7fdfd._.js",
+      "static/chunks/3d1f2_next_dist_compiled_next-devtools_index_85deb8ae.js",
+      "static/chunks/3d1f2_next_dist_compiled_17e2c40e._.js",
+      "static/chunks/3d1f2_next_dist_client_93755d67._.js",
+      "static/chunks/3d1f2_next_dist_9ed516b5._.js",
+      "static/chunks/3d1f2_@swc_helpers_cjs_cfac45e9._.js",
+      "static/chunks/SemesterV_DebugMiddleware_debug-middleware_a0ff3932._.js",
+      "static/chunks/turbopack-SemesterV_DebugMiddleware_debug-middleware_3dc74c7a._.js"
+    ]
+  }
+}
