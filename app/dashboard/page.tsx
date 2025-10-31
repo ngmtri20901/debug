@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/dashboard/app-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
