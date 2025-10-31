@@ -14,10 +14,7 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
 
   // 💨 Bật experimental turbopack (nếu bạn đang ở Next 15)
-  experimental: {
-    turbo: true,
-  },
-
+  turbopack: {},
 
   // ⚙️ Cải thiện tốc độ build cho Edge runtime
   reactStrictMode: false,
