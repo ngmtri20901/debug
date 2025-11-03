@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils/cn'
 import { createClient } from '@/shared/lib/supabase/client'
 import { Button } from '@/shared/components/ui/button'
 import { useState } from 'react'

@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get API key from server-side environment variable
-    const apiKey = process.env.GOOGLE_TTS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_TTS_API_KEY
+    const apiKey = process.env.GOOGLE_TTS_API_KEY
     
     if (!apiKey) {
       console.error('Google TTS API key is not configured')
