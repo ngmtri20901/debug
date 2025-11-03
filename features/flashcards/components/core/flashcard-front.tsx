@@ -9,7 +9,7 @@ import { Button } from "@/shared/components/ui/button"
 import { Badge } from "@/shared/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/shared/components/ui/tooltip"
 // import { toast } from "sonner" // TODO: Install sonner or use alternative toast solution
-import { audioManager } from "@/lib/utils/audio"
+import { audioManager } from "@/shared/utils/audio"
 
 interface FlashcardFrontProps {
   data: {

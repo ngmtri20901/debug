@@ -14,7 +14,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/shared/components/ui/sidebar"
-import { cn } from "@/lib/utils"
+import { cn } from "@/shared/utils/cn"
 
 export function NavMain({
   items,

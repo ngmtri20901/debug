@@ -21,6 +21,22 @@ const nextConfig = {
   // ⚙️ Cải thiện tốc độ build cho Edge runtime
   reactStrictMode: false,
 
+  // 🖼️ Configure allowed image domains for Next.js Image component
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'uavvljncupscxoxofcvp.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '/**',
+      },
+    ],
+  },
+
   // 📦 Increase Server Actions body size limit to 3MB for image uploads
   // Try both root level and experimental for compatibility
   serverActions: {

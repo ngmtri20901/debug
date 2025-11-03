@@ -6,7 +6,7 @@ import { FlashcardFront } from "./flashcard-front"
 import { FlashcardBack } from "./flashcard-back"
 import type { FlashcardData } from "@/features/flashcards/services/flashcardService"
 import { useDisplaySettings } from "@/features/settings/hooks/use-display-settings"
-import { audioManager, playFlipSound } from "@/lib/utils/audio"
+import { audioManager, playFlipSound } from "@/shared/utils/audio"
 
 interface FlashcardComponentProps {
   data: FlashcardData
