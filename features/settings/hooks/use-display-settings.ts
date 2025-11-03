@@ -1,22 +1,7 @@
 "use client"
 
-// TODO: Temporarily disabled - waiting for React Query hooks to be implemented
-// import { useDisplaySettings as useDbDisplaySettings } from '@/lib/react-query/hooks/use-user-settings'
+import { useDisplaySettingsBase } from '@/features/settings/hooks/use-user-settings'
 import { DisplaySettings } from '@/shared/types/settings'
-// import { DEFAULT_USER_SETTINGS } from '@/lib/validation/settings-schemas'
-
-// Default settings for temporary use
-const DEFAULT_DISPLAY_SETTINGS: DisplaySettings = {
-  flashcardAnimationSpeed: "normal",
-  muteSounds: false,
-  soundVolume: 75,
-  reviewTimeSeconds: 4,
-  language: "en",
-  timezone: "UTC",
-  dateFormat: "MM/DD/YYYY",
-  keyboardNavigation: true,
-  focusIndicators: true,
-}
 
 export type FlashcardAnimationSpeed = "slow" | "normal" | "fast"
 
@@ -41,62 +26,50 @@ export const SOUND_VOLUME_CONSTRAINTS = {
   step: 5,
 } as const
 
+/**
+ * Enhanced display settings hook with utility functions
+ * Wraps the base useDisplaySettings hook with flashcard-specific utilities
+ */
 export const useDisplaySettings = () => {
-  // TODO: Temporarily using default settings - implement React Query hook later
-  // const { 
-  //   settings: displaySettings, 
-  //   savedSettings,
-  //   updateDisplaySetting,
-  //   updateDisplaySettings,
-  //   saveSettings,
-  //   discardChanges,
-  //   resetToDefaults,
-  //   hasUnsavedChanges,
-  //   isSaving 
-  // } = useDbDisplaySettings()
-
-  const displaySettings = DEFAULT_DISPLAY_SETTINGS
-  const savedSettings = DEFAULT_DISPLAY_SETTINGS
-  const hasUnsavedChanges = false
-  const isSaving = false
+  const { 
+    settings: displaySettings, 
+    savedSettings,
+    updateDisplaySetting,
+    updateDisplaySettings,
+    saveSettings,
+    discardChanges,
+    resetToDefaults,
+    hasUnsavedChanges,
+    isSaving 
+  } = useDisplaySettingsBase()
 
   // Update individual setting - now only updates draft state
   const updateSetting = <K extends keyof DisplaySettings>(
-    _key: K,
-    _value: DisplaySettings[K]
+    key: K,
+    value: DisplaySettings[K]
   ) => {
-    // TODO: Implement when React Query hook is available
-    console.warn('updateSetting is temporarily disabled')
-    // updateDisplaySetting(key, value)
+    updateDisplaySetting(key, value)
   }
 
   // Update multiple settings at once - now only updates draft state
-  const updateMultipleSettings = (_updates: Partial<DisplaySettings>) => {
-    // TODO: Implement when React Query hook is available
-    console.warn('updateMultipleSettings is temporarily disabled')
-    // const newSettings = { ...displaySettings, ...updates }
-    // updateDisplaySettings(newSettings)
+  const updateMultipleSettings = (updates: Partial<DisplaySettings>) => {
+    const newSettings = { ...displaySettings, ...updates }
+    updateDisplaySettings(newSettings)
   }
 
   // Reset to defaults - now only updates draft state
   const resetSettings = () => {
-    // TODO: Implement when React Query hook is available
-    console.warn('resetSettings is temporarily disabled')
-    // resetToDefaults()
+    resetToDefaults()
   }
 
   // Explicit save function for the Save button
   const saveCurrentSettings = () => {
-    // TODO: Implement when React Query hook is available
-    console.warn('saveCurrentSettings is temporarily disabled')
-    // saveSettings()
+    saveSettings()
   }
 
   // Discard unsaved changes
   const discardSettings = () => {
-    // TODO: Implement when React Query hook is available
-    console.warn('discardSettings is temporarily disabled')
-    // discardChanges()
+    discardChanges()
   }
 
   // Utility functions (keep existing logic)
@@ -163,4 +136,5 @@ export const useDisplaySettings = () => {
     getPronunciationVolume,
     toggleMute,
   }
-} 
+}
+

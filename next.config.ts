@@ -14,10 +14,24 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
 
   // 💨 Bật experimental turbopack (nếu bạn đang ở Next 15)
-  turbopack: {},
+  turbopack: {
+    root: ".",
+  },
 
   // ⚙️ Cải thiện tốc độ build cho Edge runtime
   reactStrictMode: false,
+
+  // 📦 Increase Server Actions body size limit to 3MB for image uploads
+  // Try both root level and experimental for compatibility
+  serverActions: {
+    bodySizeLimit: '3mb',
+  },
+  
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '3mb',
+    },
+  },
 };
 
 export default nextConfig;

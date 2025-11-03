@@ -2,15 +2,12 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Button } from "@/shared/components/ui/button"
 import { Input } from "@/shared/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs"
-import { FlashcardFront } from "@/features/flashcards/components/core/flashcard-front"
 import { FlashcardComponent } from "@/features/flashcards/components/core/flashcard-component"
 import { FlashcardDeck } from "@/features/flashcards/components/core/flashcard-deck"
-import { AspectRatio } from "@/shared/components/ui/aspect-ratio"
-import { Plus, BookmarkCheck, RefreshCw, Loader2, ArrowLeft, ArrowRight, RotateCcw } from "lucide-react"
+import { Loader2, ArrowLeft, ArrowRight, RotateCcw } from "lucide-react"
 import { Alert, AlertDescription } from "@/shared/components/ui/alert"
 import PageWithLoading from "@/shared/components/ui/PageWithLoading"
 import { useLoading } from "@/shared/hooks/use-loading"
@@ -19,8 +16,7 @@ import { useLoading } from "@/shared/hooks/use-loading"
 import { 
   flashcardAPI, 
   type FlashcardTopic,
-  type WordType,
-  APIError 
+  type WordType
 } from "@/features/flashcards/services/flashcardService"
 import { type FlashcardData } from "@/features/flashcards/services/flashcardService"
 import { useSavedFlashcards } from "@/features/flashcards/hooks/useSavedFlashcards"
@@ -367,27 +363,13 @@ export default function FlashcardsPage() {
 
   return (
     <PageWithLoading isLoading={isPageLoading}>
-      <div className="container mx-auto py-10 px-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-center">Vietnamese Flashcards</h1>
-          <div className="flex gap-3">
-            <Button asChild variant="outline">
-              <Link href="/flashcards/saved">
-                <BookmarkCheck className="w-4 h-4 mr-2" />
-                My Saved Cards
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href="/flashcards/create">
-                <Plus className="w-4 h-4 mr-2" />
-                Create Flashcard
-              </Link>
-            </Button>
-          </div>
+      <div className="container mx-auto py-10 px-6 sm:px-12 max-w-full overflow-x-hidden">
+        <div className="mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Vietnamese Flashcards</h1>
         </div>
 
       {/* Search Bar */}
-      <div className="max-w-xl mx-auto mb-8">
+      <div className="max-w-xl mx-auto mb-8 px-6 sm:px-12">
         <div className="relative">
           <Input
             value={search}
@@ -403,7 +385,7 @@ export default function FlashcardsPage() {
 
       {/* Search Results */}
       {search && (
-        <div className="mb-16">
+        <div className="mb-16 px-6 sm:px-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold">Search Results</h2>
             {searchResults.length > 0 && (
@@ -500,21 +482,9 @@ export default function FlashcardsPage() {
 
       {/* Today's Flashcards */}
       {!search && todays.length > 0 && (
-        <div className="mb-16">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold">Today's Flashcards</h2>
-            <Button 
-              variant="outline" 
-              onClick={refreshTodaysCards}
-              disabled={isRefreshBusy}
-            >
-              {isRefreshBusy ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4" />
-              )}
-              Refresh
-            </Button>
+        <div className="mb-16 px-6 sm:px-12">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold">Today&apos;s Flashcards</h2>
           </div>
 
           {/* Main Flashcard Display */}
@@ -588,27 +558,29 @@ export default function FlashcardsPage() {
       )}
 
       {/* Browse Flashcard Sets */}
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Browse Flashcard Sets</h2>
-        <Tabs value={tab} onValueChange={setTab} className="">
-          <TabsList>
-            <TabsTrigger value="all">
-              All 
-            </TabsTrigger>
-            <TabsTrigger value="simple">
-              Simple 
-            </TabsTrigger>
-            <TabsTrigger value="complex">
-              Complex 
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <div className="mb-6 px-6 sm:px-12">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <h2 className="text-2xl font-bold">Browse Flashcard Sets</h2>
+          <Tabs value={tab} onValueChange={setTab} className="mr-0 sm:mr-12">
+            <TabsList>
+              <TabsTrigger value="all">
+                All 
+              </TabsTrigger>
+              <TabsTrigger value="simple">
+                Simple 
+              </TabsTrigger>
+              <TabsTrigger value="complex">
+                Complex 
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
       </div>
 
       {/* By Topic */}
-      <div className="mb-10">
+      <div className="mb-10 px-6 sm:px-12">
         <h3 className="text-lg font-semibold mb-4">By Topic</h3>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {allTopics.length === 0 ? (
             <div className="text-center text-gray-500 py-8 w-full col-span-full">No topics available.</div>
           ) : (
@@ -640,9 +612,9 @@ export default function FlashcardsPage() {
       </div>
 
       {/* By Word Type */}
-      <div className="mb-10">
+      <div className="mb-10 overflow-hidden px-6 sm:px-12">
         <h3 className="text-lg font-semibold mb-4">By Word Type</h3>
-        <div className="relative group overflow-hidden">
+        <div className="relative group overflow-hidden w-full">
           {byType.length === 0 ? (
             <div className="text-center text-gray-500 py-8 w-full">No word type groups available.</div>
           ) : (
@@ -710,9 +682,9 @@ export default function FlashcardsPage() {
       </div>
 
       {/* Others */}
-      <div className="mb-10">
+      <div className="mb-10 overflow-hidden px-6 sm:px-12">
         <h3 className="text-lg font-semibold mb-4">Others</h3>
-        <div className="relative group overflow-hidden">
+        <div className="relative group overflow-hidden w-full">
           {othersData.length === 0 ? (
             <div className="text-center text-gray-500 py-8 w-full">No other groups available.</div>
           ) : (

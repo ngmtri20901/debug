@@ -116,7 +116,98 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
+}
+
+/* CTA Card Styles - Vertical Cards (By Topic) */
+.cta-card {
+  @apply bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md h-full flex flex-col;
+}
+
+.cta-card__image {
+  @apply w-full aspect-[16/9] overflow-hidden bg-gray-100;
+  min-height: 220px;
+  max-height: 220px;
+}
+
+.cta-card__img {
+  @apply w-full h-full object-cover object-center;
+}
+
+.cta-card__content {
+  @apply p-4 flex flex-col flex-1;
+}
+
+.cta-card__title {
+  @apply text-lg font-semibold text-gray-900 mb-2;
+}
+
+.cta-card__description {
+  @apply text-sm text-gray-600 mb-4 flex-1;
+}
+
+.cta-card__footer {
+  @apply flex items-center justify-between mt-auto;
+}
+
+.cta-card__count {
+  @apply text-sm text-gray-500;
+}
+
+.cta-card__button {
+  @apply text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors;
+}
+
+/* CTA Card Horizontal Styles - Horizontal Cards (By Word Type, Others) */
+.cta-card-horizontal {
+  @apply bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md flex;
+  width: 320px;
+  min-width: 320px;
+  max-width: 320px;
+}
+
+.cta-card-horizontal__image {
+  @apply w-32 h-32 flex-shrink-0 overflow-hidden bg-gray-100;
+}
+
+.cta-card-horizontal__img {
+  @apply w-full h-full object-cover object-center;
+}
+
+.cta-card-horizontal__content {
+  @apply p-4 flex flex-col flex-1 min-w-0;
+}
+
+.cta-card-horizontal__title {
+  @apply text-base font-semibold text-gray-900 mb-1;
+}
+
+.cta-card-horizontal__description {
+  @apply text-sm text-gray-600 mb-3 flex-1 line-clamp-2;
+}
+
+.cta-card-horizontal__footer {
+  @apply flex items-center justify-between mt-auto;
+}
+
+.cta-card-horizontal__count {
+  @apply text-xs text-gray-500;
+}
+
+.cta-card-horizontal__button {
+  @apply text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors;
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

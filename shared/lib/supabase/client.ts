@@ -78,7 +78,7 @@ export function createClient() {
       auth: {
         persistSession: true,
         // DISABLED: Prevent auto refresh to avoid disrupting review sessions
-        autoRefreshToken: false,
+        autoRefreshToken: true,
         detectSessionInUrl: true,
         // Add session refresh handling for better control
         flowType: 'pkce'

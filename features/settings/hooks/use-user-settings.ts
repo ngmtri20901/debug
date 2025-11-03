@@ -1,17 +1,89 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useState, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
-import { supabase } from '@/lib/supabase/client'
+import { supabase } from '@/shared/lib/supabase/client'
 import { 
   UserSettings, 
   UserSettingsRow, 
   DisplaySettings, 
   NotificationSettings, 
   PrivacySettings,
-  validateUserSettings,
-  safeParseUserSettings,
-  DEFAULT_USER_SETTINGS 
-} from '@/lib/validation/settings-schemas'
+} from '@/shared/types/settings'
+
+// Default user settings
+export const DEFAULT_USER_SETTINGS: UserSettings = {
+  display: {
+    flashcardAnimationSpeed: "normal",
+    muteSounds: false,
+    soundVolume: 75,
+    reviewTimeSeconds: 4,
+    language: "en",
+    timezone: "UTC",
+    dateFormat: "MM/DD/YYYY",
+    keyboardNavigation: true,
+    focusIndicators: true,
+  },
+  notifications: {
+    email: {
+      dailyReminders: false,
+      weeklyProgress: false,
+      achievements: false,
+      questUpdates: false,
+      marketingEmails: false,
+    },
+    push: {
+      studyReminders: false,
+      streakReminders: false,
+      achievements: false,
+      questUpdates: false,
+      flashcardReviews: false,
+    },
+    inApp: {
+      sounds: true,
+      popups: true,
+      achievements: true,
+      levelUps: true,
+    },
+    studyReminders: {
+      enabled: false,
+      dailyGoal: false,
+      weeklyGoal: false,
+      streakMaintenance: false,
+    },
+  },
+  privacy: {
+    dataCollection: true,
+    analyticsTracking: true,
+    crashReporting: true,
+    marketingCommunications: false,
+    sessionTimeout: "30",
+    passwordChangeNotifications: true,
+  },
+}
+
+// Validation functions
+export function validateUserSettings(settings: any): UserSettings {
+  // Basic validation - in production, use Zod or similar
+  try {
+    return {
+      display: settings.display || DEFAULT_USER_SETTINGS.display,
+      notifications: settings.notifications || DEFAULT_USER_SETTINGS.notifications,
+      privacy: settings.privacy || DEFAULT_USER_SETTINGS.privacy,
+    }
+  } catch {
+    return DEFAULT_USER_SETTINGS
+  }
+}
+
+export function safeParseUserSettings(settings: any): { success: boolean; data?: UserSettings; error?: Error } {
+  try {
+    const parsed = typeof settings === 'string' ? JSON.parse(settings) : settings
+    const validated = validateUserSettings(parsed)
+    return { success: true, data: validated }
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error : new Error('Failed to parse settings') }
+  }
+}
 
 // Query keys
 export const userSettingsKeys = {
@@ -228,7 +300,7 @@ export const useUserSettings = () => {
 }
 
 // Specialized hooks for individual categories
-export const useDisplaySettings = () => {
+export const useDisplaySettingsBase = () => {
   const { 
     settings, 
     savedSettings,
@@ -310,4 +382,5 @@ export const usePrivacySettings = () => {
     hasUnsavedChanges,
     isSaving,
   }
-} 
+}
+

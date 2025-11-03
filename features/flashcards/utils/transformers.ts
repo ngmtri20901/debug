@@ -5,6 +5,33 @@
 
 import type { BackendFlashcardResponse, BackendTopicResponse, FlashcardData, FlashcardTopic } from '../types/flashcard.types'
 
+/**
+ * Converts a relative image path to a full Supabase Storage URL
+ * Handles both relative paths (e.g., "flashcards/filename.jpg") and full URLs (backward compatibility)
+ */
+export function getImageUrl(imagePath: string | null | undefined): string | null {
+  if (!imagePath) return null
+
+  // If already a full URL, return as-is (backward compatibility)
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath
+  }
+
+  // Convert relative path to full Supabase Storage URL
+  // Format: {SUPABASE_URL}/storage/v1/object/public/{bucket}/{path}
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!supabaseUrl) {
+    console.warn('NEXT_PUBLIC_SUPABASE_URL is not configured')
+    return imagePath // Return relative path as fallback
+  }
+
+  // Remove leading slash if present
+  const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath
+
+  // Construct full URL for the 'images' bucket
+  return `${supabaseUrl}/storage/v1/object/public/images/${cleanPath}`
+}
+
 // Transform backend flashcard response to frontend flashcard data
 export function transformBackendFlashcard(backend: any): FlashcardData {
   return {

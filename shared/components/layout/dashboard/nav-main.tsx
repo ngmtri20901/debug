@@ -97,7 +97,7 @@ export function NavMain({
             )
           }
 
-          // Item with sub-items - expand inline on hover
+          // Item with sub-items - expand inline on hover, also clickable to navigate to main URL
           return (
             <React.Fragment key={item.title}>
               {item.isSeparated && index > 0 && (
@@ -108,13 +108,15 @@ export function NavMain({
                 onMouseLeave={handleMouseLeave}
                 className="group/menu-item"
               >
-                <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                  <ChevronRight className={cn(
-                    "ml-auto transition-transform duration-200",
-                    isHovered && "rotate-90"
-                  )} />
+                <SidebarMenuButton asChild tooltip={item.title}>
+                  <Link href={item.url} className="flex items-center">
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                    <ChevronRight className={cn(
+                      "ml-auto transition-transform duration-200",
+                      isHovered && "rotate-90"
+                    )} />
+                  </Link>
                 </SidebarMenuButton>
                 {/* Inline sub-menu that expands on hover */}
                 {isHovered && item.items && (

@@ -5,7 +5,7 @@ import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-mo
 import { FlashcardFront } from "./flashcard-front"
 import { FlashcardBack } from "./flashcard-back"
 import type { FlashcardData } from "@/features/flashcards/services/flashcardService"
-import { useDisplaySettings } from "@/shared/hooks/use-display-settings"
+import { useDisplaySettings } from "@/features/settings/hooks/use-display-settings"
 import { audioManager, playFlipSound } from "@/lib/utils/audio"
 
 interface FlashcardComponentProps {
