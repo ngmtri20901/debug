@@ -88,6 +88,30 @@ export async function createFlashcard(
       }
     }
 
+    // Automatically sync to saved_flashcards table so it appears on saved page
+    // Format: flashcard_id = 'custom_' || flashcard_id, flashcard_type = 'CUSTOM'
+    const savedFlashcardData = {
+      UserID: user.id,
+      flashcard_id: `custom_${flashcardDataResult.id}`,
+      flashcard_type: 'CUSTOM' as const,
+      topic: input.topic?.trim() || null,
+      is_favorite: false,
+      review_count: 0,
+      tags: []
+    }
+
+    const { error: savedInsertError } = await supabaseAny
+      .from('saved_flashcards')
+      .insert(savedFlashcardData)
+
+    if (savedInsertError) {
+      console.error('⚠️ Failed to sync flashcard to saved_flashcards:', savedInsertError)
+      // Don't fail the whole operation - the flashcard was created successfully
+      // It can be synced later via the sync button
+    } else {
+      console.log('✅ Flashcard automatically synced to saved_flashcards')
+    }
+
     // Revalidate the saved flashcards page to show new card
     revalidatePath('/flashcards/saved')
 

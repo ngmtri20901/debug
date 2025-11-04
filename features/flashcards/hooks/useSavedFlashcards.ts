@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { createClient } from '@/shared/lib/supabase/client'
 import { toast } from 'sonner'
 
@@ -11,6 +11,13 @@ import { toast } from 'sonner'
 export function useSavedFlashcards() {
   const [savedCards, setSavedCards] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
+  // Use ref to track current savedCards for use in callbacks without stale closures
+  const savedCardsRef = useRef<Set<string>>(new Set())
+  
+  // Keep ref in sync with state
+  useEffect(() => {
+    savedCardsRef.current = savedCards
+  }, [savedCards])
 
   // Load saved cards on mount
   useEffect(() => {
@@ -38,14 +45,18 @@ export function useSavedFlashcards() {
           const savedIds = localStorage.getItem(`saved_flashcards_${user.id}`)
           if (savedIds) {
             const ids = JSON.parse(savedIds) as string[]
-            setSavedCards(new Set(ids))
+            const savedSet = new Set(ids)
+            setSavedCards(savedSet)
+            savedCardsRef.current = savedSet
           }
           return
         }
 
         // Extract flashcard IDs
         const ids = savedFlashcards?.map(sf => sf.flashcard_id) || []
-        setSavedCards(new Set(ids))
+        const savedSet = new Set(ids)
+        setSavedCards(savedSet)
+        savedCardsRef.current = savedSet
         
         // Sync to localStorage as backup
         localStorage.setItem(`saved_flashcards_${user.id}`, JSON.stringify(ids))
@@ -66,16 +77,19 @@ export function useSavedFlashcards() {
       
       if (!user) {
         toast.error('Please log in to save flashcards')
-        return
+        return false
       }
 
       setLoading(true)
       
-      // Check if already saved
-      const isSaved = savedCards.has(flashcardId)
+      // Check current saved state using ref to avoid stale closure issues
+      const isSaved = savedCardsRef.current.has(flashcardId)
+      
+      console.log('🔄 [useSavedFlashcards] Toggling save for flashcard:', flashcardId, 'isSaved:', isSaved)
       
       if (isSaved) {
         // Remove from saved_flashcards table
+        console.log('🗑️ [useSavedFlashcards] Removing flashcard from saved_flashcards')
         const { error: deleteError } = await supabase
           .from('saved_flashcards')
           .delete()
@@ -84,12 +98,12 @@ export function useSavedFlashcards() {
           .eq('flashcard_type', 'APP')
 
         if (deleteError) {
-          console.error('Failed to unsave flashcard:', deleteError)
+          console.error('❌ [useSavedFlashcards] Failed to unsave flashcard:', deleteError)
           toast.error('Failed to remove flashcard')
-          return
+          return false
         }
 
-        // Update local state
+        // Update local state using functional update
         setSavedCards(prev => {
           const next = new Set(prev)
           next.delete(flashcardId)
@@ -101,9 +115,12 @@ export function useSavedFlashcards() {
           return next
         })
         
+        console.log('✅ [useSavedFlashcards] Flashcard removed successfully')
         toast.success('Flashcard removed from your collection')
+        return true
       } else {
         // Add to saved_flashcards table
+        console.log('💾 [useSavedFlashcards] Adding flashcard to saved_flashcards')
         const { error: insertError } = await supabase
           .from('saved_flashcards')
           .insert({
@@ -120,23 +137,34 @@ export function useSavedFlashcards() {
         if (insertError) {
           // Check if it's a duplicate key error (already saved)
           if (insertError.code === '23505') {
-            console.log('Flashcard already saved')
+            console.log('ℹ️ [useSavedFlashcards] Flashcard already saved (duplicate key)')
             toast.info('Flashcard is already saved')
             // Update local state to reflect this
             setSavedCards(prev => {
               const next = new Set(prev)
               next.add(flashcardId)
+              
+              // Update localStorage
+              const ids = Array.from(next)
+              localStorage.setItem(`saved_flashcards_${user.id}`, JSON.stringify(ids))
+              
               return next
             })
-            return
+            return true
           }
           
-          console.error('Failed to save flashcard:', insertError)
-          toast.error('Failed to save flashcard')
-          return
+          console.error('❌ [useSavedFlashcards] Failed to save flashcard:', insertError)
+          console.error('❌ [useSavedFlashcards] Error details:', {
+            code: insertError.code,
+            message: insertError.message,
+            details: insertError.details,
+            hint: insertError.hint
+          })
+          toast.error(`Failed to save flashcard: ${insertError.message || 'Unknown error'}`)
+          return false
         }
 
-        // Update local state
+        // Update local state using functional update
         setSavedCards(prev => {
           const next = new Set(prev)
           next.add(flashcardId)
@@ -148,15 +176,19 @@ export function useSavedFlashcards() {
           return next
         })
         
+        console.log('✅ [useSavedFlashcards] Flashcard saved successfully')
         toast.success('Flashcard saved to your collection')
+        return true
       }
     } catch (error) {
-      console.error('Failed to toggle save flashcard:', error)
-      toast.error('An error occurred. Please try again.')
+      console.error('❌ [useSavedFlashcards] Unexpected error toggling save:', error)
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred'
+      toast.error(`An error occurred: ${errorMessage}`)
+      return false
     } finally {
       setLoading(false)
     }
-  }, [savedCards])
+  }, []) // Remove savedCards from dependencies - use functional updates instead
 
   const isFlashcardSaved = useCallback((flashcardId: string): boolean => {
     return savedCards.has(flashcardId)

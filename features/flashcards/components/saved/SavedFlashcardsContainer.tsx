@@ -94,7 +94,7 @@ export default function SavedFlashcardsContainer({ initialData }: { initialData:
     router.refresh()
   }, [router])
 
-  // Real-time subscription to detect new custom flashcards
+  // Real-time subscription to detect new custom flashcards and saved flashcards
   useEffect(() => {
     const supabase = createClient()
 
@@ -105,11 +105,11 @@ export default function SavedFlashcardsContainer({ initialData }: { initialData:
       return
     }
 
-    console.log('🔄 [SavedFlashcards] Setting up real-time subscription for user:', initialData.userId)
+    console.log('🔄 [SavedFlashcards] Setting up real-time subscriptions for user:', initialData.userId)
 
     // Subscribe to INSERT events on custom_flashcards table
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const channel = (supabase as any)
+    const channel1 = (supabase as any)
       .channel('custom_flashcards_changes')
       .on(
         'postgres_changes',
@@ -122,24 +122,48 @@ export default function SavedFlashcardsContainer({ initialData }: { initialData:
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (payload: any) => {
           console.log('✨ [SavedFlashcards] New custom flashcard detected:', payload)
-
-          // Refresh the page to fetch the new flashcard
-          // This will trigger a server-side data reload
           toast.success('New flashcard added! Refreshing...')
           router.refresh()
         }
       )
       .subscribe()
 
-    console.log('✅ [SavedFlashcards] Real-time subscription active')
+    // Subscribe to INSERT events on saved_flashcards table for this user
+    // This catches when custom flashcards are synced to saved_flashcards
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const channel2 = (supabase as any)
+      .channel('saved_flashcards_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'saved_flashcards',
+          filter: `UserID=eq.${initialData.userId}`
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
+          console.log('✨ [SavedFlashcards] New saved flashcard detected:', payload)
+          // Only refresh if it's a CUSTOM flashcard (APP flashcards are handled elsewhere)
+          if (payload.new?.flashcard_type === 'CUSTOM') {
+            toast.success('Flashcard synced! Refreshing...')
+            router.refresh()
+          }
+        }
+      )
+      .subscribe()
 
-    // Cleanup subscription on unmount
+    console.log('✅ [SavedFlashcards] Real-time subscriptions active')
+
+    // Cleanup subscriptions on unmount
     return () => {
-      console.log('🧹 [SavedFlashcards] Cleaning up real-time subscription')
+      console.log('🧹 [SavedFlashcards] Cleaning up real-time subscriptions')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (typeof (supabase as any).removeChannel === 'function') {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).removeChannel(channel)
+        ;(supabase as any).removeChannel(channel1)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(supabase as any).removeChannel(channel2)
       }
     }
   }, [initialData.userId, router])
