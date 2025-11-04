@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/shared/components/ui/button"
@@ -85,6 +85,64 @@ export default function SavedFlashcardsContainer({ initialData }: { initialData:
   // Countdown toast state
   const [showCountdownToast, setShowCountdownToast] = useState(false)
   const [pendingUnsave, setPendingUnsave] = useState<PendingUnsave | null>(null)
+
+  // Refresh data when component mounts to ensure we have the latest flashcards
+  // This is especially important after creating a new flashcard
+  useEffect(() => {
+    console.log('🔄 [SavedFlashcards] Component mounted, checking for updates...')
+    // Refresh server data to get any newly created flashcards
+    router.refresh()
+  }, [router])
+
+  // Real-time subscription to detect new custom flashcards
+  useEffect(() => {
+    const supabase = createClient()
+
+    // Only set up real-time if Supabase is properly configured
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!supabase || typeof (supabase as any).channel !== 'function') {
+      console.log('⚠️ [SavedFlashcards] Real-time subscriptions not available (Supabase not configured)')
+      return
+    }
+
+    console.log('🔄 [SavedFlashcards] Setting up real-time subscription for user:', initialData.userId)
+
+    // Subscribe to INSERT events on custom_flashcards table
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const channel = (supabase as any)
+      .channel('custom_flashcards_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'custom_flashcards',
+          filter: `user_id=eq.${initialData.userId}`
+        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (payload: any) => {
+          console.log('✨ [SavedFlashcards] New custom flashcard detected:', payload)
+
+          // Refresh the page to fetch the new flashcard
+          // This will trigger a server-side data reload
+          toast.success('New flashcard added! Refreshing...')
+          router.refresh()
+        }
+      )
+      .subscribe()
+
+    console.log('✅ [SavedFlashcards] Real-time subscription active')
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log('🧹 [SavedFlashcards] Cleaning up real-time subscription')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof (supabase as any).removeChannel === 'function') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).removeChannel(channel)
+      }
+    }
+  }, [initialData.userId, router])
 
   // Wrapper functions for the SavedFlashcardsList component
   const handleUnsaveFlashcard = (flashcardId: string, flashcardText: string, actionType: 'unsave' | 'delete') => {
