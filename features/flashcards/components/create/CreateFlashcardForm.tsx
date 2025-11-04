@@ -11,7 +11,7 @@ import { ImagePlus, Volume2, RotateCcw, Plus, RefreshCw, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { FlashcardPreviewClient } from './FlashcardPreviewClient'
-import { createFlashcard, uploadFlashcardImage } from '@/features/flashcards/actions/flashcard-actions'
+import { createFlashcard, uploadFlashcardImage } from '@/features/flashcards/actions/create'
 
 interface FlashcardData {
   vietnamese: string

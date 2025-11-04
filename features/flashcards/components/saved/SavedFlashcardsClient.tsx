@@ -36,9 +36,11 @@ import PageWithLoading from "@/shared/components/ui/PageWithLoading"
 import { useLoading } from "@/shared/hooks/use-loading"
 import { createClient } from "@/shared/lib/supabase/client"
 import { syncCustomFlashcardsToSaved, checkSyncStatus } from "@/features/flashcards/services/flashcardSyncService"
-import { deleteCustomFlashcard, unsaveAppFlashcard } from "@/features/flashcards/actions/flashcard-actions"
+import { deleteCustomFlashcard } from "@/features/flashcards/actions/delete"
+import { unsaveAppFlashcard } from "@/features/flashcards/actions/unsave"
 import { useInfiniteQuery, useQueryClient, useQuery } from "@tanstack/react-query"
 import { FlashcardListSkeleton, FlashcardSkeleton } from "@/features/flashcards/components/core/flashcard-skeleton"
+import { searchVietnamese } from "@/shared/utils/vi-normalize"
 
 interface SavedFlashcardDetails {
   id: string
@@ -745,8 +747,9 @@ export default function SavedFlashcardsClient() {
       const vietnameseText = flashcard.vietnamese || flashcard.vietnamese_text || ''
       const englishText = flashcard.english?.join(' ') || flashcard.english_text || ''
 
-      const matchesSearch =
-        vietnameseText.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      // Use Vietnamese normalization for search - allows matching without diacritics
+      const matchesSearch = searchTerm.trim() === '' ||
+        searchVietnamese(vietnameseText, searchTerm) ||
         englishText.toLowerCase().includes(searchTerm.toLowerCase())
 
       const matchesTopic = selectedTopic === 'all' || flashcard.topic === selectedTopic
