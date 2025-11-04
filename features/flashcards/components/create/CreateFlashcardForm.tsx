@@ -10,7 +10,6 @@ import { Label } from '@/shared/components/ui/label'
 import { ImagePlus, Volume2, RotateCcw, Plus, RefreshCw, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { useQueryClient } from '@tanstack/react-query'
 import { FlashcardPreviewClient } from './FlashcardPreviewClient'
 import { createFlashcard, uploadFlashcardImage } from '@/features/flashcards/actions/create'
 
@@ -25,7 +24,6 @@ interface FlashcardData {
 
 export default function CreateFlashcardForm({ userId }: { userId: string }) {
   const router = useRouter()
-  const queryClient = useQueryClient()
   const [isCreating, setIsCreating] = useState(false)
 
   const [flashcardData, setFlashcardData] = useState<FlashcardData>({
@@ -154,12 +152,7 @@ export default function CreateFlashcardForm({ userId }: { userId: string }) {
 
       console.log('✅ Flashcard created successfully:', result.data)
 
-      // Step 3: Invalidate React Query cache to refresh saved flashcards
-      console.log('🔄 Invalidating React Query cache...')
-      queryClient.invalidateQueries({ queryKey: ['saved-flashcards'] })
-      queryClient.invalidateQueries({ queryKey: ['saved-flashcard-stats'] })
-
-      // Step 4: Success feedback with action link
+      // Step 3: Success feedback with action link
       toast.success('Flashcard created successfully!', {
         duration: 4000,
         action: {
@@ -172,7 +165,7 @@ export default function CreateFlashcardForm({ userId }: { userId: string }) {
         }
       })
 
-      // Step 5: Reset form for next flashcard
+      // Step 4: Reset form for next flashcard
       resetForm()
     } catch (error) {
       console.error('❌ Error creating flashcard:', error)

@@ -1,7 +1,17 @@
 import { Suspense } from 'react'
-import SavedFlashcardsClient from '@/features/flashcards/components/saved/SavedFlashcardsClient'
+import { redirect } from 'next/navigation'
+import { loadSavedFlashcardsData } from '@/features/flashcards/data/saved-flashcards-loader'
+import SavedFlashcardsContainer from '@/features/flashcards/components/saved/SavedFlashcardsContainer'
 
-export default function SavedFlashcardsPage() {
+export default async function SavedFlashcardsPage() {
+  // Fetch data on the server
+  const data = await loadSavedFlashcardsData()
+
+  // Redirect to login if not authenticated
+  if (!data) {
+    redirect('/auth/login')
+  }
+
   return (
     <Suspense fallback={
       <div className="container mx-auto p-6 space-y-6">
@@ -47,7 +57,7 @@ export default function SavedFlashcardsPage() {
         </div>
       </div>
     }>
-      <SavedFlashcardsClient />
+      <SavedFlashcardsContainer initialData={data} />
     </Suspense>
   )
 } 

@@ -605,7 +605,7 @@ function SavedFlashcardsListComponent({
                       <Clock className="h-3 w-3" />
                       {flashcard.review_count} reviews
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1" suppressHydrationWarning>
                       <Calendar className="h-3 w-3" />
                       {formatDistanceToNow(new Date(flashcard.saved_at), { addSuffix: true })}
                     </div>
@@ -697,7 +697,7 @@ function SavedFlashcardsListComponent({
                       <Clock className="h-3 w-3" />
                       {flashcard.review_count} reviews
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1" suppressHydrationWarning>
                       <Calendar className="h-3 w-3" />
                       {formatDistanceToNow(new Date(flashcard.saved_at), { addSuffix: true })}
                     </div>
@@ -843,7 +843,7 @@ function SavedFlashcardsListComponent({
                             <Clock className="h-3 w-3" />
                             {flashcard.review_count} reviews
                           </div>
-                          <div className="flex items-center gap-1 mt-1">
+                          <div className="flex items-center gap-1 mt-1" suppressHydrationWarning>
                             <Calendar className="h-3 w-3" />
                             {formatDistanceToNow(new Date(flashcard.saved_at), { addSuffix: true })}
                           </div>
@@ -936,7 +936,7 @@ function SavedFlashcardsListComponent({
                             <Clock className="h-3 w-3" />
                             {flashcard.review_count} reviews
                           </div>
-                          <div className="flex items-center gap-1 mt-1">
+                          <div className="flex items-center gap-1 mt-1" suppressHydrationWarning>
                             <Calendar className="h-3 w-3" />
                             {formatDistanceToNow(new Date(flashcard.saved_at), { addSuffix: true })}
                           </div>

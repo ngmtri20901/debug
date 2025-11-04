@@ -1,18 +1,21 @@
+'use client'
+
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/shared/components/ui/button";
 import { Progress } from "@/shared/components/ui/progress";
 import { X, RotateCcw } from "lucide-react";
 
 interface CountdownToastProps {
-  message: string;
+  flashcardText: string;
   duration: number; // in seconds
   onUndo: () => void;
   onComplete: () => void;
-  onDismiss: () => void;
+  onDismiss?: () => void;
 }
 
 export function CountdownToast({
-  message,
+  flashcardText,
   duration,
   onUndo,
   onComplete,
@@ -61,11 +64,11 @@ export function CountdownToast({
 
   const timeLeft = Math.max(0, duration - (progress / 100) * duration);
 
-  return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-[320px] max-w-md">
+  const toast = (
+    <div className="fixed bottom-6 right-6 z-50 pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-lg p-4 min-w-[320px] max-w-md animate-in slide-in-from-bottom-5 fade-in duration-300">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
-          <p className="text-sm font-medium text-gray-900">{message}</p>
+          <p className="text-sm font-medium text-gray-900">{flashcardText}</p>
           <p className="text-xs text-gray-600 mt-1">
             {timeLeft > 0 ? (
               <>Auto-deleting in {Math.ceil(timeLeft)} second{Math.ceil(timeLeft) !== 1 ? 's' : ''}</>
@@ -74,14 +77,16 @@ export function CountdownToast({
             )}
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onDismiss}
-          className="p-1 h-auto"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        {onDismiss && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onDismiss}
+            className="p-1 h-auto"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       
       {timeLeft > 0 && (
@@ -102,4 +107,7 @@ export function CountdownToast({
       )}
     </div>
   );
+
+  // Render via portal so it is anchored to viewport (not affected by layout/overflow of parents)
+  return createPortal(toast, document.body);
 }
