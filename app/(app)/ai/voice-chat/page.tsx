@@ -47,7 +47,7 @@ async function VoiceChatHome() {
           </p>
 
           <Button asChild className="btn-primary max-sm:w-full">
-            <Link href="/ai/voice-chat/interview">Start Voice Chat</Link>
+            <Link href="/ai/voice-chat/speak">Start Voice Chat</Link>
           </Button>
         </div>
 
@@ -67,7 +67,7 @@ async function VoiceChatHome() {
             <h2 className="text-2xl font-bold">Your Recent Conversations</h2>
             {hasPastConversations && (
               <Link
-                href="/ai/voice-chat/interview"
+                href="/ai/voice-chat/speak"
                 className="text-primary hover:underline"
               >
                 View All →
@@ -198,7 +198,7 @@ async function VoiceChatHome() {
 function TopicCard({ topic }: { topic: VoiceTopic }) {
   return (
     <Link
-      href={`/ai/voice-chat/interview?topic=${topic.id}`}
+      href={`/ai/voice-chat/speak?topic=${topic.id}`}
       className="block p-6 bg-white border border-gray-200 rounded-lg hover:shadow-lg transition-shadow duration-200"
     >
       <div className="flex items-start gap-3">
@@ -235,7 +235,7 @@ function ConversationCard({ conversation }: { conversation: VoiceConversation })
 
   return (
     <Link
-      href={`/ai/voice-chat/interview/${conversation.id}`}
+      href={`/ai/voice-chat/speak/${conversation.id}`}
       className="block p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200"
     >
       <div className="flex justify-between items-start mb-2">

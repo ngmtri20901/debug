@@ -98,17 +98,17 @@ const Agent = ({
       });
 
       if (success && data) {
-        router.push(`/vietnamese/speaking/${conversationId}/feedback`);
+        router.push(`/ai/voice-chat/speak/${conversationId}/feedback`);
       } else {
         console.error("Error generating feedback");
-        router.push("/vietnamese/speaking");
+        router.push("/ai/voice-chat");
       }
     };
 
     if (callStatus === CallStatus.FINISHED) {
       if (type === "practice") {
         // Practice mode - just go back to topics
-        router.push("/vietnamese/speaking");
+        router.push("/ai/voice-chat");
       } else {
         // Conversation mode - generate feedback
         handleGenerateFeedback(messages);
