@@ -140,8 +140,8 @@ const Agent = ({
         ...vietnameseTutorAssistant,
         firstMessage:
           topicTitle
-            ? `Xin chào ${userName}! Hôm nay chúng ta sẽ nói về chủ đề "${topicTitle}". Bạn đã sẵn sàng chưa?`
-            : `Xin chào ${userName}! Tôi là trợ lý AI giúp bạn luyện tiếng Việt. Bạn muốn nói về gì hôm nay?`,
+            ? `Xin chào ${userName}! Today we will talk about "${topicTitle}". Are you ready? (Bạn đã sẵn sàng chưa?)`
+            : `Xin chào ${userName}! I'm your AI tutor. Let's practice Vietnamese together! (Chúng ta cùng luyện tiếng Việt nhé!)`,
       };
 
       // If we have prompts, add them to system message
@@ -173,7 +173,7 @@ const Agent = ({
             />
             {isSpeaking && <span className="animate-speak" />}
           </div>
-          <h3>Trợ lý AI</h3>
+          <h3>AI Tutor</h3>
           {topicTitle && (
             <p className="text-sm text-gray-500 mt-1">{topicTitle}</p>
           )}
@@ -222,13 +222,13 @@ const Agent = ({
 
             <span className="relative">
               {callStatus === "INACTIVE" || callStatus === "FINISHED"
-                ? "Bắt đầu"
-                : "Đang kết nối..."}
+                ? "Start Call"
+                : "Connecting..."}
             </span>
           </button>
         ) : (
           <button className="btn-disconnect" onClick={() => handleDisconnect()}>
-            Kết thúc
+            End Call
           </button>
         )}
       </div>

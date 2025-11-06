@@ -100,9 +100,9 @@ export const DIFFICULTY_LEVELS = {
 } as const;
 
 export const DIFFICULTY_LABELS: Record<string, string> = {
-  beginner: "Sơ cấp",
-  intermediate: "Trung cấp",
-  advanced: "Cao cấp",
+  beginner: "Beginner",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
 };
 
 // =====================================================
@@ -117,10 +117,10 @@ export const CONVERSATION_TYPES = {
 } as const;
 
 export const CONVERSATION_TYPE_LABELS: Record<string, string> = {
-  free_talk: "Trò chuyện tự do",
-  scenario_based: "Tình huống thực tế",
-  vocabulary_practice: "Luyện từ vựng",
-  pronunciation_drill: "Luyện phát âm",
+  free_talk: "Free Talk",
+  scenario_based: "Scenario-Based",
+  vocabulary_practice: "Vocabulary Practice",
+  pronunciation_drill: "Pronunciation Drill",
 };
 
 // =====================================================
@@ -130,32 +130,32 @@ export const CONVERSATION_TYPE_LABELS: Record<string, string> = {
 export const FEEDBACK_CATEGORIES = [
   {
     key: "pronunciation",
-    name: "Phát âm (Pronunciation)",
-    description: "Độ chính xác phát âm, thanh điệu",
+    name: "Pronunciation",
+    description: "Accuracy of pronunciation and tones",
     color: "blue",
   },
   {
     key: "grammar",
-    name: "Ngữ pháp (Grammar)",
-    description: "Cấu trúc câu, ngữ pháp tiếng Việt",
+    name: "Grammar",
+    description: "Sentence structure and Vietnamese grammar",
     color: "green",
   },
   {
     key: "vocabulary",
-    name: "Từ vựng (Vocabulary)",
-    description: "Độ phong phú và chính xác của từ vựng",
+    name: "Vocabulary",
+    description: "Range and accuracy of vocabulary",
     color: "purple",
   },
   {
     key: "communication",
-    name: "Giao tiếp (Communication)",
-    description: "Khả năng truyền đạt ý tưởng",
+    name: "Communication",
+    description: "Ability to express ideas clearly",
     color: "orange",
   },
   {
     key: "fluency",
-    name: "Độ trôi chảy (Fluency)",
-    description: "Độ tự nhiên và mạch lạc khi nói",
+    name: "Fluency",
+    description: "Natural flow and coherence",
     color: "pink",
   },
 ];
@@ -172,11 +172,11 @@ export const SCORE_THRESHOLDS = {
 };
 
 export const SCORE_LABELS: Record<string, string> = {
-  excellent: "Xuất sắc",
-  good: "Tốt",
-  average: "Trung bình",
-  needs_improvement: "Cần cải thiện",
-  poor: "Yếu",
+  excellent: "Excellent",
+  good: "Good",
+  average: "Average",
+  needs_improvement: "Needs Improvement",
+  poor: "Poor",
 };
 
 export function getScoreLabel(score: number): string {
