@@ -5,9 +5,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { cn } from "@/lib/utils";
-import { vapi } from "@/lib/vapi.sdk";
-import { interviewer } from "@/constants";
-import { createFeedback } from "@/lib/actions/general.action";
+import { vapi } from "@/features/ai/voice/vapi.sdk";
+import { vietnameseTutorAssistant } from "@/shared/constants/vietnamese-voice";
+import { createFeedback } from "@/features/ai/voice/actions/voice.action";
 
 enum CallStatus {
   INACTIVE = "INACTIVE",
@@ -24,10 +24,11 @@ interface SavedMessage {
 const Agent = ({
   userName,
   userId,
-  interviewId,
+  conversationId,
   feedbackId,
   type,
-  questions,
+  topicTitle,
+  prompts,
 }: AgentProps) => {
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
@@ -88,55 +89,67 @@ const Agent = ({
     }
 
     const handleGenerateFeedback = async (messages: SavedMessage[]) => {
-      console.log("handleGenerateFeedback");
+      console.log("Generating feedback for conversation:", conversationId);
 
-      const { success, feedbackId: id } = await createFeedback({
-        interviewId: interviewId!,
-        userId: userId!,
+      const { success, data } = await createFeedback({
+        conversationId: conversationId!,
         transcript: messages,
         feedbackId,
       });
 
-      if (success && id) {
-        router.push(`/interview/${interviewId}/feedback`);
+      if (success && data) {
+        router.push(`/ai/voice-chat/speak/${conversationId}/feedback`);
       } else {
-        console.log("Error saving feedback");
-        router.push("/");
+        console.error("Error generating feedback");
+        router.push("/ai/voice-chat");
       }
     };
 
     if (callStatus === CallStatus.FINISHED) {
-      if (type === "generate") {
-        router.push("/");
+      if (type === "practice") {
+        // Practice mode - just go back to topics
+        router.push("/ai/voice-chat");
       } else {
+        // Conversation mode - generate feedback
         handleGenerateFeedback(messages);
       }
     }
-  }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
+  }, [messages, callStatus, feedbackId, conversationId, router, type]);
 
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
 
-    if (type === "generate") {
+    if (type === "practice") {
+      // Practice mode - use workflow for quick practice
       await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
         variableValues: {
           username: userName,
           userid: userId,
+          topic: topicTitle || "Vietnamese conversation",
         },
       });
     } else {
-      let formattedQuestions = "";
-      if (questions) {
-        formattedQuestions = questions
-          .map((question) => `- ${question}`)
-          .join("\n");
+      // Conversation mode - use assistant config with prompts
+      let formattedPrompts = "";
+      if (prompts && prompts.length > 0) {
+        formattedPrompts = prompts.map((p) => `- ${p}`).join("\n");
       }
 
-      await vapi.start(interviewer, {
-        variableValues: {
-          questions: formattedQuestions,
-        },
-      });
+      // Create assistant config with Vietnamese tutor system message
+      const assistantConfig = {
+        ...vietnameseTutorAssistant,
+        firstMessage:
+          topicTitle
+            ? `Xin chào ${userName}! Today we will talk about "${topicTitle}". Are you ready? (Bạn đã sẵn sàng chưa?)`
+            : `Xin chào ${userName}! I'm your AI tutor. Let's practice Vietnamese together! (Chúng ta cùng luyện tiếng Việt nhé!)`,
+      };
+
+      // If we have prompts, add them to system message
+      if (formattedPrompts) {
+        assistantConfig.model.messages[0].content += `\n\n**Gợi ý câu hỏi để hỏi người học:**\n${formattedPrompts}`;
+      }
+
+      await vapi.start(assistantConfig);
     }
   };
 
@@ -148,19 +161,22 @@ const Agent = ({
   return (
     <>
       <div className="call-view">
-        {/* AI Interviewer Card */}
+        {/* Vietnamese AI Tutor Card */}
         <div className="card-interviewer">
           <div className="avatar">
             <Image
               src="/ai-avatar.png"
-              alt="profile-image"
+              alt="Vietnamese AI Tutor"
               width={65}
               height={54}
               className="object-cover"
             />
             {isSpeaking && <span className="animate-speak" />}
           </div>
-          <h3>AI Interviewer</h3>
+          <h3>AI Tutor</h3>
+          {topicTitle && (
+            <p className="text-sm text-gray-500 mt-1">{topicTitle}</p>
+          )}
         </div>
 
         {/* User Profile Card */}
@@ -206,13 +222,13 @@ const Agent = ({
 
             <span className="relative">
               {callStatus === "INACTIVE" || callStatus === "FINISHED"
-                ? "Call"
-                : ". . ."}
+                ? "Start Call"
+                : "Connecting..."}
             </span>
           </button>
         ) : (
           <button className="btn-disconnect" onClick={() => handleDisconnect()}>
-            End
+            End Call
           </button>
         )}
       </div>
