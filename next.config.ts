@@ -48,6 +48,21 @@ const nextConfig = {
       bodySizeLimit: '3mb',
     },
   },
+
+  // Add Cache-Control headers for flashcards routes to prevent stale data
+  async headers() {
+    return [
+      {
+        source: '/flashcards/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, max-age=0',
+          },
+        ],
+      },
+    ]
+  },
 };
 
 export default nextConfig;

@@ -18,6 +18,7 @@ export async function apiRequest<T>(endpoint: string, options?: RequestInit): Pr
         "Content-Type": "application/json",
         ...options?.headers,
       },
+      cache: 'no-store', // Prevent browser and Next.js caching for fresh data
       ...options,
     })
 

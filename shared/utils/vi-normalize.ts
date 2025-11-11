@@ -69,34 +69,107 @@ export function normalizeVietnamese(text: string): string {
 }
 
 /**
+ * Normalize Vietnamese text for exercise comparison by:
+ * 1. Removing diacritics
+ * 2. Removing punctuation marks (.,!?;:'"()[]{}...)
+ * 3. Normalizing whitespace
+ * 4. Converting to lowercase (optional)
+ *
+ * This is useful for comparing user input with expected answers in exercises
+ * where minor punctuation differences shouldn't mark the answer as incorrect.
+ *
+ * @param text - The Vietnamese text to normalize
+ * @param options - Normalization options
+ * @returns The normalized text
+ *
+ * @example
+ * normalizeForComparison("Xin chào, bạn khỏe không?")
+ * // returns "xin chao ban khoe khong"
+ *
+ * normalizeForComparison("Tôi ăn cơm.")
+ * // returns "toi an com"
+ *
+ * normalizeForComparison("Hôm nay, trời đẹp!", { preserveCase: true })
+ * // returns "Hom nay troi dep"
+ */
+export function normalizeForComparison(
+  text: string,
+  options: {
+    preserveCase?: boolean
+    preserveWhitespace?: boolean
+  } = {}
+): string {
+  if (!text) return ''
+
+  const { preserveCase = false, preserveWhitespace = false } = options
+
+  // Step 1: Remove diacritics
+  let normalized = normalizeVietnamese(text)
+
+  // Step 2: Remove all punctuation marks using Unicode property escapes
+  // \p{P} matches any punctuation character
+  // \p{S} matches any symbol character (like currency, math symbols, etc.)
+  normalized = normalized.replace(/[\p{P}\p{S}]+/gu, '')
+
+  // Step 3: Normalize whitespace (replace multiple spaces with single space)
+  if (!preserveWhitespace) {
+    normalized = normalized.replace(/\s+/g, ' ').trim()
+  }
+
+  // Step 4: Convert to lowercase (if not preserving case)
+  if (!preserveCase) {
+    normalized = normalized.toLowerCase()
+  }
+
+  return normalized
+}
+
+/**
  * Compare two Vietnamese strings without considering diacritics
  * Useful for case-insensitive search/matching
  *
  * @param str1 - First string to compare
  * @param str2 - Second string to compare
- * @param caseSensitive - Whether comparison should be case-sensitive (default: false)
+ * @param options - Comparison options
  * @returns true if strings match after normalization
  *
  * @example
  * compareVietnamese("Xin chào", "xin chao") // returns true
  * compareVietnamese("Cà phê", "CA PHE") // returns true
  * compareVietnamese("Học", "hoc") // returns true
+ * compareVietnamese("Xin chào!", "Xin chao", { ignorePunctuation: true }) // returns true
  */
 export function compareVietnamese(
   str1: string,
   str2: string,
-  caseSensitive: boolean = false
+  options: {
+    caseSensitive?: boolean
+    ignorePunctuation?: boolean
+  } = {}
 ): boolean {
   if (!str1 || !str2) return str1 === str2
 
-  const normalized1 = normalizeVietnamese(str1)
-  const normalized2 = normalizeVietnamese(str2)
+  const { caseSensitive = false, ignorePunctuation = false } = options
 
-  if (caseSensitive) {
+  let normalized1: string
+  let normalized2: string
+
+  if (ignorePunctuation) {
+    // Use full normalization including punctuation removal
+    normalized1 = normalizeForComparison(str1, { preserveCase: caseSensitive })
+    normalized2 = normalizeForComparison(str2, { preserveCase: caseSensitive })
     return normalized1 === normalized2
-  }
+  } else {
+    // Only remove diacritics
+    normalized1 = normalizeVietnamese(str1)
+    normalized2 = normalizeVietnamese(str2)
 
-  return normalized1.toLowerCase() === normalized2.toLowerCase()
+    if (caseSensitive) {
+      return normalized1 === normalized2
+    }
+
+    return normalized1.toLowerCase() === normalized2.toLowerCase()
+  }
 }
 
 /**

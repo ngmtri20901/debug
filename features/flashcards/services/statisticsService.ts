@@ -192,6 +192,12 @@ export async function getUserDetailedStats(daysBack: number = 30): Promise<Detai
       .eq("user_id", user.id)
       .gte("date", fromDateString)
       .order("date", { ascending: true })
+      // Force bypass cache to ensure fresh data
+      .headers({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      })
 
     if (error) {
       console.error("Error fetching detailed stats:", error)
@@ -244,6 +250,12 @@ export async function getUserStreak(): Promise<number> {
       .select("streak_days")
       .eq("id", user.id)
       .single()
+      // Force bypass cache to ensure fresh data
+      .headers({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      })
 
     if (error) {
       console.error("Error fetching user streak:", error)
@@ -284,6 +296,12 @@ export async function hasStatisticsData(): Promise<boolean> {
       .select("id")
       .eq("user_id", user.id)
       .limit(1)
+      // Force bypass cache to ensure fresh data
+      .headers({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      })
 
     if (error) {
       console.error("Error checking for statistics data:", error)
@@ -318,6 +336,12 @@ export async function exportStatisticsCSV(daysBack: number = 30): Promise<string
       .from("user_profiles")
       .select("subscription_type")
       .eq("id", user.id)
+      // Force bypass cache to ensure fresh data
+      .headers({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      })
 
     if (profileError) {
       console.error("Error fetching user profile for export:", profileError)
