@@ -1,10 +1,6 @@
 // app/learn/[topicSlug]/page.tsx
-import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
+import { createClient } from "@/shared/lib/supabase/server";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft } from "lucide-react";
 import LessonsList from "./LessonsList";
 import TopicProgressStats from "./TopicProgressStats";
 import { notFound } from "next/navigation";
@@ -42,6 +38,9 @@ export default async function TopicPage({
   const { topicSlug } = await params;
   const supabase = await createClient();
 
+  // Get current user for progress data
+  const { data: { user } } = await supabase.auth.getUser();
+
   // 1) Lấy topic theo slug
   const { data: topic, error: topicErr } = await (supabase as any)
     .from("topics")
@@ -77,24 +76,20 @@ export default async function TopicPage({
   const list = (lessons ?? []) as LessonRow[];
   const totalLessons = list.length;
 
+  // 3) Fetch user progress for this topic server-side
+  let initialProgress: any[] = [];
+  if (user?.id) {
+    const { data: progressData } = await supabase
+      .from('user_lesson_progress')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('topic_id', topic.topic_id);
+
+    initialProgress = progressData ?? [];
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-pink-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/learn">
-            <Button variant="ghost" size="sm" className="gap-1">
-              <ChevronLeft size={16} />
-              Back to Learn
-            </Button>
-          </Link>
-          <h1 className="text-2xl font-bold text-[#067BC2]">
-            {topic.english_title ?? "Topic"}
-          </h1>
-          <div />
-        </div>
-      </header>
-
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         {/* --- Redesigned Topic Card --- */}
         {/* Sử dụng 'group' để tạo hiệu ứng hover cho các element con */}
@@ -128,9 +123,10 @@ export default async function TopicPage({
               </p>
 
               {/* 4. Progress Section - Real-time updates */}
-              <TopicProgressStats 
+              <TopicProgressStats
                 topicId={topic.topic_id}
                 totalLessons={totalLessons}
+                initialProgress={initialProgress}
               />
             </div>
           </div>
@@ -141,12 +137,13 @@ export default async function TopicPage({
           <div>
             <h3 className="text-2xl font-bold text-gray-900 mb-6">Lessons</h3>
 
-            <LessonsList 
-              lessons={list} 
+            <LessonsList
+              lessons={list}
               topicId={topic.topic_id}
-              topicSlug={topicSlug} 
+              topicSlug={topicSlug}
               zoneId={topic.zone_id}
               zoneLevel={zoneLevel}
+              initialProgress={initialProgress}
             />
           </div>
         </div>

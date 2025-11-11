@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@/shared/lib/supabase/server'
 import type {
   Exercise,
   Question,
@@ -15,7 +15,7 @@ import type {
   SynonymPair,
   ChooseWordsType,
   MCQType
-} from '@/types/practice'
+} from '@/features/learn/types'
 
 async function getLessonIdsBySlugs(
   topicSlug: string,
@@ -460,4 +460,43 @@ export async function getExerciseBySlugs(
     zoneLevel: ids.zone_level,
     questions,
   } as Exercise
+}
+
+/**
+ * Check if the user should be allowed to access the exercise page
+ * Returns true only if user has an active (in_progress) session
+ * This blocks direct URL access - sessions must be created via button click first
+ *
+ * @param practiceSetId - The ID of the practice set
+ * @param userId - The ID of the user
+ * @returns boolean indicating if user has an active session
+ */
+export async function canAccessExercise(
+  practiceSetId: string,
+  userId: string
+): Promise<boolean> {
+  const supabase = await createClient()
+
+  // Check for active in_progress session
+  const { data: activeSession, error } = await supabase
+    .from('practice_results')
+    .select('id, status')
+    .eq('practice_set_id', practiceSetId)
+    .eq('user_id', userId)
+    .eq('status', 'in_progress')
+    .maybeSingle()
+
+  if (error) {
+    console.error('[canAccessExercise] Error checking for active session:', error)
+    return false // Block access on error to be safe
+  }
+
+  // Allow access only if there's an active in_progress session
+  const hasActiveSession = !!activeSession
+
+  if (!hasActiveSession) {
+    console.log('[canAccessExercise] No active session found for practice_set:', practiceSetId)
+  }
+
+  return hasActiveSession
 }

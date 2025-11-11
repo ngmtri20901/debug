@@ -1,11 +1,11 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
+import { Button } from "@/shared/components/ui/button"
+import { Card, CardContent } from "@/shared/components/ui/card"
+import { cn } from "@/shared/utils/cn"
 import { CheckCircle, XCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "@/shared/components/ui/alert"
 import Image from "next/image"
 
 // Default questions for image-question type

@@ -2,12 +2,11 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams, type ReadonlyURLSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useExercise, ExerciseProvider } from "@/contexts/ExerciseContext"
-import Link from "next/link"
+import { Button } from "@/shared/components/ui/button"
+import { Card, CardContent } from "@/shared/components/ui/card"
+import { Progress } from "@/shared/components/ui/progress"
+import { Alert, AlertDescription } from "@/shared/components/ui/alert"
+import { useExercise, ExerciseProvider } from "@/features/learn/contexts/ExerciseContext"
 import type {
   Exercise,
   MultipleChoiceQuestion,
@@ -17,7 +16,7 @@ import type {
   WordMatchingQuestion,
   DialogueCompletionQuestion,
   RolePlayQuestion,
-} from "@/types/practice"
+} from "@/features/learn/types/practice"
 
 import { MultipleChoiceQuestion as MCQ } from "./MCQ/multiple-choice-question"
 import { ChooseWords } from "./ChooseWords/choose-words"
@@ -26,9 +25,16 @@ import { WordsMatching } from "./WordsMatching/words-matching"
 import { ErrorCorrection } from "./writing/ErrorCorrection"
 import { DialogueCompletion } from "./dialogue/DialogueCompletion"
 import { RolePlay } from "./dialogue/RolePlay"
-import { useSidebar } from "@/components/ui/sidebar"
-import { getLessonBySlug } from "@/data/exercisesData"
-import { calculateAccuracy, isExercisePassed } from "@/lib/exercise-utils"
+import { useSidebar } from "@/shared/components/ui/sidebar"
+import { calculateAccuracy, isExercisePassed } from "@/features/learn/utils/exercise-utils"
+
+// Stub implementation - returns null since we don't have lesson navigation data yet
+// This will cause the "Next Lesson" button to navigate back to the topic page
+const getLessonBySlug = (topicSlug: string, lessonSlug: string) => {
+  // TODO: Implement actual lesson fetching logic to get next lesson in sequence
+  // For now, return null to prevent errors
+  return null
+}
 
 type ContainerProps = {
   exercise: Exercise
@@ -117,17 +123,21 @@ function ExerciseStageEx({ topicSlug, lessonSlug }: { topicSlug: string; lessonS
 
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button variant="outline" onClick={() => resetExercise()}>Retry</Button>
-            <Link href={`/learn/${topicSlug}/${lessonSlug}`} className="w-full sm:w-auto">
-              <Button variant="secondary" className="w-full">Back to Lesson</Button>
-            </Link>
+            <Button
+              variant="secondary"
+              className="w-full sm:w-auto"
+              onClick={() => router.replace(`/learn/${topicSlug}/${lessonSlug}`)}
+            >
+              Back to Lesson
+            </Button>
             {passed && (
               <Button
                 className="w-full sm:w-auto"
                 onClick={() => {
                   if (nextLessonSlug) {
-                    router.push(`/learn/${topicSlug}/${nextLessonSlug}`)
+                    router.replace(`/learn/${topicSlug}/${nextLessonSlug}`)
                   } else {
-                    router.push(`/learn/${topicSlug}`)
+                    router.replace(`/learn/${topicSlug}`)
                   }
                 }}
               >

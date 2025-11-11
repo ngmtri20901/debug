@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/shared/components/ui/button"
+import { Card, CardContent } from "@/shared/components/ui/card"
+import { cn } from "@/shared/utils/cn"
+import { Alert, AlertDescription } from "@/shared/components/ui/alert"
 import { CheckCircle, XCircle } from "lucide-react"
 
 export interface DialogueLine {

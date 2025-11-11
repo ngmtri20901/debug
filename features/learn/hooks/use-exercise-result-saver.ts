@@ -1,8 +1,8 @@
 "use client"
 
 import { useCallback, useRef } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { QuestionAttempt } from '@/lib/exercise-utils'
+import { createClient } from '@/shared/lib/supabase/client'
+import type { QuestionAttempt } from '@/features/learn/utils/exercise-utils'
 
 export interface ExerciseResultData {
   practiceSetId: string

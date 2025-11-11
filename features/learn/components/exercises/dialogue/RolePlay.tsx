@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { cn } from "@/lib/utils"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/shared/components/ui/button"
+import { Card, CardContent } from "@/shared/components/ui/card"
+import { Progress } from "@/shared/components/ui/progress"
+import { cn } from "@/shared/utils/cn"
+import { Alert, AlertDescription } from "@/shared/components/ui/alert"
 import { CheckCircle, XCircle } from "lucide-react"
 
 export interface RoleplayChoice {

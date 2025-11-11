@@ -3,15 +3,15 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Play, Pause, Volume2, RotateCw, RotateCcw, Loader2 } from "lucide-react";
 import { TbMessageLanguage } from "react-icons/tb";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/shared/components/ui/button";
+import { Slider } from "@/shared/components/ui/slider";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/shared/components/ui/tooltip";
 
 type WordTimestamp = {
   s: number; // start time in milliseconds

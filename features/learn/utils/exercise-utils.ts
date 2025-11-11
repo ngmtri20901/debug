@@ -1,6 +1,7 @@
 "use client"
 
-import type { Exercise, Question, ExerciseProgress, MultipleChoiceQuestion, ChooseWordsQuestion, GrammarStructureQuestion } from "@/types/practice"
+import type { Exercise, Question, ExerciseProgress, MultipleChoiceQuestion, ChooseWordsQuestion, GrammarStructureQuestion } from "@/features/learn/types"
+import { normalizeForComparison } from "@/shared/utils/vi-normalize"
 
 // Grading result interface
 export interface GradeResult {
@@ -109,7 +110,10 @@ export function gradeQuestion(question: Question, userAnswer: any): GradeResult 
           const correct: string[] = qd.data?.blanks?.correct || []
           let correctCount = 0
           for (let i = 0; i < correct.length; i++) {
-            if (userWords[i] === correct[i]) correctCount++
+            // Use Vietnamese normalization for each word comparison
+            const normalizedUser = normalizeForComparison(userWords[i] || '')
+            const normalizedCorrect = normalizeForComparison(correct[i] || '')
+            if (normalizedUser === normalizedCorrect) correctCount++
           }
           const isCorrectCW = correct.length > 0 && correctCount === correct.length && userWords.length === correct.length
           return {
@@ -124,18 +128,23 @@ export function gradeQuestion(question: Question, userAnswer: any): GradeResult 
             const correctTokens: string[] = qd.data?.tokens || []
             const userSentence = userWords.join(" ").trim()
             const canonicalSentence = (qd.data?.canonical_sentence || correctTokens.join(" ")).trim()
-            const normalize = (s: string) => s.replace(/\s+/g, " ").trim()
+
+            // Use Vietnamese normalization that handles diacritics and punctuation
+            const normalizedUser = normalizeForComparison(userSentence)
+            const normalizedCanonical = normalizeForComparison(canonicalSentence)
 
             let correctCount = 0
             const len = Math.min(userWords.length, correctTokens.length)
             for (let i = 0; i < len; i++) {
-              if (userWords[i] === correctTokens[i]) correctCount++
+              const normalizedUserWord = normalizeForComparison(userWords[i] || '')
+              const normalizedCorrectWord = normalizeForComparison(correctTokens[i] || '')
+              if (normalizedUserWord === normalizedCorrectWord) correctCount++
             }
 
             const isCorrectCW = (
               correctTokens.length > 0 &&
               userWords.length === correctTokens.length &&
-              normalize(userSentence) === normalize(canonicalSentence)
+              normalizedUser === normalizedCanonical
             )
             return {
               isCorrect: isCorrectCW,
@@ -148,12 +157,15 @@ export function gradeQuestion(question: Question, userAnswer: any): GradeResult 
             let correctCount = 0
             const len = Math.min(userWords.length, correctTokens.length)
             for (let i = 0; i < len; i++) {
-              if (userWords[i] === correctTokens[i]) correctCount++
+              // Use Vietnamese normalization for each word comparison
+              const normalizedUser = normalizeForComparison(userWords[i] || '')
+              const normalizedCorrect = normalizeForComparison(correctTokens[i] || '')
+              if (normalizedUser === normalizedCorrect) correctCount++
             }
             const isCorrectCW = (
               correctTokens.length > 0 &&
               userWords.length === correctTokens.length &&
-              userWords.every((w, i) => w === correctTokens[i])
+              correctCount === correctTokens.length
             )
             return {
               isCorrect: isCorrectCW,
@@ -166,7 +178,14 @@ export function gradeQuestion(question: Question, userAnswer: any): GradeResult 
 
       // Legacy fallback
       const correctWords: string[] = (question as any).correctAnswer || []
-      const correctCount = userWords.filter((word: string) => correctWords.includes(word)).length
+      let correctCount = 0
+      for (const userWord of userWords) {
+        // Check if this word matches any correct word using normalization
+        const normalizedUser = normalizeForComparison(userWord)
+        if (correctWords.some(cw => normalizeForComparison(cw) === normalizedUser)) {
+          correctCount++
+        }
+      }
       const isCorrectCW = correctWords.length > 0 && correctCount === correctWords.length && userWords.length === correctWords.length
       return {
         isCorrect: isCorrectCW,
@@ -176,7 +195,10 @@ export function gradeQuestion(question: Question, userAnswer: any): GradeResult 
     }
 
     case "error-correction": {
-      const isCorrectCorrection = userAnswer?.trim().toLowerCase() === question.target.toLowerCase()
+      // Use Vietnamese normalization that ignores diacritics and punctuation
+      const normalizedUserAnswer = normalizeForComparison(userAnswer || '')
+      const normalizedTarget = normalizeForComparison(question.target)
+      const isCorrectCorrection = normalizedUserAnswer === normalizedTarget
       return {
         isCorrect: isCorrectCorrection,
         score: isCorrectCorrection ? 1 : 0,

@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
+import { Badge } from '@/shared/components/ui/badge'
 import { CheckCircle2, Clock, Lock, Circle } from 'lucide-react'
 
 interface LessonProgressBadgeProps {

@@ -1,9 +1,15 @@
 "use client"
 
 import { createContext, useContext, useState, type ReactNode } from "react"
-import { initialUserProgress } from "@/data/exercisesData"
-import type { UserProgress, Lesson } from "@/types/exercises"
-import { useToast } from "@/components/ui/use-toast"
+import type { UserProgress, Lesson } from "@/features/learn/types/exercises"
+import { useToast } from "@/shared/hooks/use-toast"
+
+// Initial user progress state
+const initialUserProgress: UserProgress = {
+  completedLessons: [],
+  unlockedChapters: [],
+  coins: 0,
+}
 
 interface UserProgressContextType {
   userProgress: UserProgress

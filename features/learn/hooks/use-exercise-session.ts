@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useRef } from 'react'
-import type { QuestionAttempt } from '@/lib/exercise-utils'
+import type { QuestionAttempt } from '@/features/learn/utils/exercise-utils'
 
 export interface ExerciseSession {
   practiceResultId: string

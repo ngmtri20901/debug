@@ -1,4 +1,4 @@
-import type { UserLessonProgress } from '@/lib/supabase/lesson-progress'
+import type { UserLessonProgress } from '@/features/learn/api'
 
 export type SubscriptionTier = 'FREE' | 'PLUS' | 'UNLIMITED'
 

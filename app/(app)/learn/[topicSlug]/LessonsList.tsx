@@ -1,15 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/shared/components/ui/button"
+import { Card, CardContent } from "@/shared/components/ui/card"
 import { Clock, Award, CheckCircle2, Lock } from "lucide-react"
-import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile"
-import { useTopicProgress, useZoneCompletion } from "@/lib/react-query/hooks"
-import { useLessonUnlock } from "@/hooks/use-lesson-unlock"
-import { LessonProgressBadge } from "@/components/lesson/LessonProgressBadge"
-import { LessonUnlockTooltip } from "@/components/lesson/LessonUnlockTooltip"
-import type { SubscriptionTier } from "@/lib/lesson-unlock-logic"
+import { useUserProfile } from "@/shared/hooks/use-user-profile"
+import { useTopicProgress, useZoneCompletion } from "@/features/learn/hooks"
+import { LessonProgressBadge, LessonUnlockTooltip } from "@/features/learn/components/lesson"
+import { checkLessonUnlock } from "@/features/learn/utils/lesson-unlock-logic"
+import type { SubscriptionTier } from "@/features/learn/utils/lesson-unlock-logic"
 
 type LessonRow = {
   id: number
@@ -27,17 +26,19 @@ interface LessonsListProps {
   topicSlug: string
   zoneId: number
   zoneLevel: number
+  initialProgress?: any[]
 }
 
-export default function LessonsList({ 
-  lessons, 
+export default function LessonsList({
+  lessons,
   topicId,
-  topicSlug, 
+  topicSlug,
   zoneId,
-  zoneLevel 
+  zoneLevel,
+  initialProgress
 }: LessonsListProps) {
   const { profile, user } = useUserProfile()
-  const { topicProgress, isLoading: progressLoading } = useTopicProgress(topicId)
+  const { topicProgress } = useTopicProgress(topicId, initialProgress)
   
   // Get zone completion stats for previous zone (for FREE tier unlock check)
   const { completed: prevZoneCompleted, total: prevZoneTotal } = useZoneCompletion(zoneId - 1)
@@ -58,56 +59,16 @@ export default function LessonsList({
           ? topicProgress.find(p => p.lesson_id === previousLesson.id)
           : null
 
-        // Check unlock status using the hook
-        const unlockStatus = {
-          isLocked: false,
-          reason: undefined as any,
-          requiredAction: undefined as any,
-          completedTopicsInPrevZone: undefined as number | undefined,
-          totalTopicsInPrevZone: undefined as number | undefined,
-        }
-
-        // Simple unlock logic for now (will be enhanced with hook)
-        if (!user) {
-          unlockStatus.isLocked = true
-          unlockStatus.reason = 'login_required'
-          unlockStatus.requiredAction = 'Please log in to access lessons'
-        } else if (tier === 'UNLIMITED') {
-          unlockStatus.isLocked = false
-        } else if (tier === 'FREE') {
-          // Check zone unlock for FREE tier
-          if (zoneLevel > 1) {
-            const allTopicsCompleted = prevZoneTotal > 0 && prevZoneCompleted >= prevZoneTotal
-            
-            if (!allTopicsCompleted) {
-              unlockStatus.isLocked = true
-              unlockStatus.reason = 'zone_locked'
-              unlockStatus.requiredAction = `Complete all topics in the previous zone to unlock this zone`
-              unlockStatus.completedTopicsInPrevZone = prevZoneCompleted
-              unlockStatus.totalTopicsInPrevZone = prevZoneTotal
-            }
-          }
-
-          // If zone is unlocked, check lesson sequence
-          if (!unlockStatus.isLocked) {
-            if (index === 0) {
-              unlockStatus.isLocked = false // First lesson always unlocked
-            } else if (!previousProgress || previousProgress.status !== 'passed') {
-              unlockStatus.isLocked = true
-              unlockStatus.reason = 'previous_incomplete'
-              unlockStatus.requiredAction = 'Complete the previous lesson in this topic first'
-            }
-          }
-        } else if (tier === 'PLUS') {
-          // PLUS: All zones, sequential within topics
-          if (index === 0) {
-            unlockStatus.isLocked = false
-          } else if (!previousProgress || previousProgress.status !== 'passed') {
-            unlockStatus.isLocked = true
-            unlockStatus.reason = 'previous_incomplete'
-            unlockStatus.requiredAction = 'Complete the previous lesson first'
-          }
-        }
+        // Check unlock status using the utility function (not hook, since we're in a map)
+        const unlockStatus = checkLessonUnlock({
+          userTier: tier,
+          isAuthenticated: !!user,
+          zoneLevel,
+          lessonSortOrder: lesson.sort_order ?? (index + 1),
+          previousLessonProgress: previousProgress ?? null,
+          completedTopicsInPreviousZone: prevZoneCompleted,
+          totalTopicsInPreviousZone: prevZoneTotal,
+        })
 
         const isLocked = unlockStatus.isLocked
 

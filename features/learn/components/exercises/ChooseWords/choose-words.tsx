@@ -1,11 +1,12 @@
 "use client"
 
 import { useState, useEffect, useRef, useMemo } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
+import { Button } from "@/shared/components/ui/button"
+import { Card } from "@/shared/components/ui/card"
+import { cn } from "@/shared/utils/cn"
 import { Volume2, CheckCircle, XCircle } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "@/shared/components/ui/alert"
+import { normalizeForComparison } from "@/shared/utils/vi-normalize"
 
 // Types for our component
 export type ExerciseType = "translation" | "fill_in_blanks" | "sentence_scramble"
@@ -213,12 +214,21 @@ export function ChooseWords({
           }
         })
 
-        // Check if all positions are filled and with correct words
-        isCorrect = correctAnswer.every((word, index) => userAnswerByPosition.get(index + 1) === word)
+        // Check if all positions are filled and with correct words using Vietnamese normalization
+        isCorrect = correctAnswer.every((word, index) => {
+          const userWord = userAnswerByPosition.get(index + 1) || ''
+          return normalizeForComparison(userWord) === normalizeForComparison(word)
+        })
       } else {
-        // For other types, check the sequence
+        // For other types, check the sequence using Vietnamese normalization
         const userAnswer = selectedWords.map((item) => item.content)
-        isCorrect = userAnswer.join(" ") === correctAnswer.join(" ")
+        const userSentence = userAnswer.join(" ")
+        const correctSentence = correctAnswer.join(" ")
+
+        // Normalize both sentences for comparison
+        const normalizedUser = normalizeForComparison(userSentence)
+        const normalizedCorrect = normalizeForComparison(correctSentence)
+        isCorrect = normalizedUser === normalizedCorrect
       }
 
       if (!controlled) {

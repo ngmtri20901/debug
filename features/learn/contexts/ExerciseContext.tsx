@@ -1,14 +1,13 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react"
-import type { Exercise, ExerciseProgress, Question } from "@/types/practice"
-import { useToast } from "@/components/ui/use-toast"
-import { useSound } from "@/hooks/useSound"
-import { triggerExerciseCompletionProgress, triggerStudyTimeProgress } from "@/lib/quest-integration"
-import { useExerciseSession } from "@/hooks/use-exercise-session"
+import type { Exercise, ExerciseProgress, Question } from "@/features/learn/types/practice"
+import { useToast } from "@/shared/hooks/use-toast"
+import { useSound } from "@/shared/hooks/useSound"
+import { useExerciseSession } from "@/features/learn/hooks/use-exercise-session"
 import { useQueryClient } from '@tanstack/react-query'
-import { queryKeys } from '@/lib/react-query/query-keys'
-import { useUserProfile } from '@/lib/react-query/hooks/use-user-profile'
+import { queryKeys } from '@/shared/hooks/query-keys'
+import { useUserProfile } from '@/shared/hooks/use-user-profile'
 import {
   saveExerciseSession,
   loadExerciseSession,
@@ -20,7 +19,7 @@ import {
   isExercisePassed,
   type QuestionAttempt,
   type GradeResult
-} from "@/lib/exercise-utils"
+} from "@/features/learn/utils/exercise-utils"
 
 interface ExerciseContextType {
   exercise: Exercise | null
@@ -129,9 +128,9 @@ export const ExerciseProvider = ({
           // Resume from API session
           console.log('[ExerciseContext] Resuming from API session:', apiSession.practiceResultId)
           practiceResultId.current = apiSession.practiceResultId
-          
-          const resumeIndex = localSession 
-            ? Math.min(localSession.currentQuestionIndex, exerciseData.questions.length - 1) 
+
+          const resumeIndex = localSession
+            ? Math.min(localSession.currentQuestionIndex, exerciseData.questions.length - 1)
             : 0
 
           setExercise(exerciseData)
@@ -146,38 +145,18 @@ export const ExerciseProvider = ({
           setSkippedQueueIds(localSession?.skippedQueueIds || [])
           setSkipCounts(localSession?.skipCounts || {})
         } else {
-          // Start a new session via API
-          console.log('[ExerciseContext] Starting new API session for practice_set:', {
-            practiceSetId: exerciseData.id,
-            type: typeof exerciseData.id,
-            exerciseData
+          // No active session found - redirect back to lesson page
+          // Session should have been created via button click before navigation
+          console.error('[ExerciseContext] No active session found - redirecting to lesson page')
+          toast({
+            title: "No Active Session",
+            description: "Please start the exercise from the lesson page.",
+            variant: "destructive"
           })
-          const newSession = await startApiSession(exerciseData.id)
-          
-          if (newSession) {
-            practiceResultId.current = newSession.practiceResultId
-            console.log('[ExerciseContext] New session created:', practiceResultId.current)
-          } else {
-            console.error('[ExerciseContext] Failed to create API session')
-            toast({
-              title: "Session Error",
-              description: "Could not start exercise session. Please refresh and try again.",
-              variant: "destructive"
-            })
-            return
-          }
 
-          setExercise(exerciseData)
-          setProgress({
-            currentQuestionIndex: 0,
-            correctAnswers: 0,
-            incorrectAnswers: 0,
-            startTime: Date.now(),
-            completed: false,
-          })
-          setPhase("main")
-          setSkippedQueueIds([])
-          setSkipCounts({})
+          // Redirect back to lesson page
+          window.location.href = `/learn/${topicSlug}/${lessonSlug}`
+          return
         }
 
         initialized.current = true
@@ -360,15 +339,6 @@ export const ExerciseProvider = ({
       clearExerciseSession(exercise.id, lessonSlug)
       practiceResultId.current = null
 
-      // Trigger quest progress tracking
-      try {
-        await triggerExerciseCompletionProgress(1)
-        if (studyTimeMinutes > 0) {
-          await triggerStudyTimeProgress(studyTimeMinutes)
-        }
-      } catch (error) {
-        console.warn("[ExerciseContext] Failed to update quest progress:", error)
-      }
 
       // Show completion toast
       const rewardText = submitResult.isFirstPass 

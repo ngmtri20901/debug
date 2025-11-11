@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, BookMarked, Check } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 
 interface GrammarPoint {
   usage?: string;

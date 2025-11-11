@@ -1,13 +1,9 @@
 export const revalidate = 2592000 // ISR: 30 days (30 * 24 * 60 * 60)
 
-import Link from "next/link"
-import { ChevronLeft } from "lucide-react"
-import { createClient } from "@/lib/supabase/server"
-import { UserProgressProvider } from "@/contexts/UserProgressContext"
-import UserCoins from "@/components/exercises/UserCoins"
-import ZoneSection from "@/components/exercises/ZoneSection"
-import { Button } from "@/components/ui/button"
-import type { Zone, Topic } from "@/types/exercises"
+import { createClient } from "@/shared/lib/supabase/server"
+import { UserProgressProvider } from "@/features/learn/contexts"
+import { ZoneSection } from "@/features/learn/components/lesson"
+import type { Zone, Topic } from "@/features/learn/types"
 
 // Map numeric zone_id from DB to app Zone ids
 const zoneIdToKey: Record<number, Zone["id"]> = {
@@ -148,37 +144,10 @@ export default async function ExercisesPage() {
 
   return (
     <UserProgressProvider>
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white border-b sticky top-0 z-10">
-          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm" className="gap-1">
-                <ChevronLeft size={16} />
-                Back to Dashboard
-              </Button>
-            </Link>
-            <h1 className="text-2xl font-bold text-[#067BC2]">Vietnamese Exercises</h1>
-            <UserCoins />
-          </div>
-        </header>
-
-        <main className="container mx-auto px-4 py-8">
-          {/* Page Introduction */}
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Master Vietnamese Step by Step
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Progress through different learning zones, from beginner basics to advanced mastery. 
-              Each topic contains carefully structured lessons to build your Vietnamese skills.
-            </p>
-          </div>
-
-          {/* Zones */}
-          {zones.map((zone) => (
-            <ZoneSection key={zone.id} zone={zone} />
-          ))}
-        </main>
+      <div className="space-y-6">
+        {zones.map((zone) => (
+          <ZoneSection key={zone.id} zone={zone} />
+        ))}
       </div>
     </UserProgressProvider>
   )

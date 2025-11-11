@@ -1,6 +1,6 @@
 "use client"
 
-import type { Zone } from "@/types/exercises"
+import type { Zone } from "@/features/learn/types/exercises"
 import TopicCard from "./TopicCard"
 
 interface ZoneSectionProps {

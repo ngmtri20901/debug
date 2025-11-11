@@ -1,15 +1,16 @@
 // app/(dashboard)/learn/[topicSlug]/[lessonSlug]/page.tsx
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Clock, Award, BookOpen, Play, Lightbulb, Check  } from "lucide-react";
-import DialoguePlayer from "@/components/lesson/DialoguePlayer";
-import StorybookPopup from "@/components/lesson/StorybookPopup";
-import GrammarCarousel from "@/components/lesson/GrammarCarousel";
-import ExampleSentences from "@/components/lesson/ExampleSentences";
-import KeyVocabulary from "@/components/lesson/KeyVocabulary";
-import { notFound } from "next/navigation"; 
+import { createClient } from "@/shared/lib/supabase/server";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Clock, Award, BookOpen, Play, Lightbulb, Check } from "lucide-react";
+import { DialoguePlayer } from "@/features/learn/components/lesson";
+import StorybookPopup from "@/features/learn/components/lesson/StorybookPopup";
+import GrammarCarousel from "@/features/learn/components/lesson/GrammarCarousel";
+import ExampleSentences from "@/features/learn/components/lesson/ExampleSentences";
+import KeyVocabulary from "@/features/learn/components/lesson/KeyVocabulary";
+import { notFound } from "next/navigation";
+import { StartExerciseButton } from "./StartExerciseButton"; 
 
 
 
@@ -78,6 +79,25 @@ function isBlockedByGemini(url?: string | null) {
   }
 }
 
+// Helper to normalize explanation (parse if string, return as-is if object)
+function normalizeExplanation(explanation: any): any {
+  if (!explanation) return null;
+  
+  if (typeof explanation === 'string') {
+    try {
+      return JSON.parse(explanation);
+    } catch {
+      return explanation;
+    }
+  }
+  
+  if (typeof explanation === 'object') {
+    return explanation;
+  }
+  
+  return null;
+}
+
 // Helper to safely render explanation (can be string or object)
 function renderExplanation(explanation: any) {
   if (!explanation) return null;
@@ -104,6 +124,9 @@ export default async function LessonPage({
 }) {
   const { topicSlug, lessonSlug } = await params;
   const supabase = await createClient();
+
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Topic
   const { data: topic } = await (supabase as any)
@@ -134,6 +157,30 @@ export default async function LessonPage({
     notFound();
   }
 
+  // Check if user has passed this lesson
+  let lessonPassed = false;
+  if (user) {
+    const { data: progressData } = await supabase
+      .from("user_lesson_progress")
+      .select("status")
+      .eq("user_id", user.id)
+      .eq("lesson_id", lesson.id)
+      .maybeSingle();
+
+    lessonPassed = progressData?.status === "passed";
+  }
+
+  // Get active practice set for this lesson
+  const { data: practiceSet } = await (supabase as any)
+    .from("practice_sets")
+    .select("id")
+    .eq("lesson_id", lesson.id)
+    .eq("is_active", true)
+    .eq("status", "ACTIVE")
+    .order("sequence_order", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
   // Materials
   const { data: materials } = await (supabase as any)
     .from("lesson_materials")
@@ -162,12 +209,18 @@ export default async function LessonPage({
   };
 
   // Chọn main ưu tiên: storybook > dialogue > image > video
-  const mainBlock =
+  const mainBlockRaw =
     mains.find((m) => m.type === "storybook") ??
     mains.find((m) => m.type === "dialogue") ??
     mains.find((m) => m.type === "image") ??
     mains.find((m) => m.type === "video") ??
     null;
+
+  // Normalize explanation for mainBlock
+  const mainBlock = mainBlockRaw ? {
+    ...mainBlockRaw,
+    explanation: normalizeExplanation(mainBlockRaw.explanation)
+  } : null;
 
   // Chuẩn bị media + highlight
   let mainMediaUrl: string | null = resolveMediaUrl(mainBlock);
@@ -211,20 +264,7 @@ export default async function LessonPage({
   const storyIsBlocked = mainBlock?.type === "storybook" && isBlockedByGemini(mainMediaUrl ?? undefined);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href={`/learn/${topic.slug}`}>
-            <Button variant="ghost">← Back to {topic.english_title ?? "Topic"}</Button>
-          </Link>
-          <h1 className="text-xl md:text-2xl font-bold text-[#067BC2]">{lesson.lesson_name}</h1>
-          <div />
-        </div>
-      </header>
-
-      {/* Layout */}
-      <main className="container mx-auto px-4 py-8 max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* LEFT: MAIN (2 cols) */}
         <section className="md:col-span-2 space-y-6">
           {/* Main Content Card */}
@@ -361,7 +401,7 @@ export default async function LessonPage({
                         <DialoguePlayer title={undefined} spriteUrl={spriteUrl || undefined} lines={lines} defaultHighlight={hl} />
 
                         {/* Kiểm tra xem mainBlock.explanation có dữ liệu hay không */}
-                        {(mainBlock.explanation?.summary || mainBlock.explanation?.grammar_focus || mainBlock.explanation?.notes) && (
+                        {mainBlock?.explanation && (mainBlock.explanation.summary || mainBlock.explanation.grammar_focus || mainBlock.explanation.notes) && (
                           <div className="mt-6 rounded-lg border border-sky-200 bg-sky-50 p-4">
                             {/* Phần Header với Icon */}
                             <div className="flex items-center gap-3">
@@ -374,14 +414,14 @@ export default async function LessonPage({
                             {/* Phần nội dung được chia tách */}
                             <div className="mt-3 space-y-4 text-sm">
                               {/* Hiển thị phần Summary */}
-                              {mainBlock.explanation.summary && (
+                              {mainBlock.explanation?.summary && (
                                 <div>
                                   <p className="mt-1 text-slate-700">{mainBlock.explanation.summary}</p>
                                 </div>
                               )}
 
                               {/* Hiển thị phần Grammar Focus (dưới dạng danh sách) */}
-                              {Array.isArray(mainBlock.explanation.grammar_focus) && mainBlock.explanation.grammar_focus.length > 0 && (
+                              {Array.isArray(mainBlock.explanation?.grammar_focus) && mainBlock.explanation.grammar_focus.length > 0 && (
                                 <div>
                                   <h5 className="font-semibold text-slate-800">Grammar Focus</h5>
                                   <ul className="mt-2 space-y-2">
@@ -395,10 +435,10 @@ export default async function LessonPage({
                                 </div>
                               )}
 
-                              {/* Hiển thị phần Cultural Notes */}
-                              {Array.isArray(mainBlock.explanation.notes) && mainBlock.explanation.notes.length > 0 && (
+                              {/* Hiển thị phần Notes */}
+                              {Array.isArray(mainBlock.explanation?.notes) && mainBlock.explanation.notes.length > 0 && (
                                 <div>
-                                  <h5 className="font-semibold text-slate-800">Cultural Notes</h5>
+                                  <h5 className="font-semibold text-slate-800">Notes</h5>
                                   <ul className="mt-2 space-y-2">
                                     {mainBlock.explanation.notes.map((note: string, index: number) => (
                                       <li key={index} className="flex items-start gap-2">
@@ -477,9 +517,18 @@ export default async function LessonPage({
                   </div>
                 </div>
 
-                <Link href={`/learn/${topic.slug}/${lesson.slug}/exercise`} className="inline-block w-full">
-                  <Button className="w-full bg-[#067BC2] hover:bg-[#055a9f] mt-6">Start Exercise</Button>
-                </Link>
+                {practiceSet ? (
+                  <StartExerciseButton
+                    topicSlug={topic.slug}
+                    lessonSlug={lesson.slug}
+                    practiceSetId={practiceSet.id}
+                    isReview={lessonPassed}
+                  />
+                ) : (
+                  <Button disabled className="w-full mt-6">
+                    No Exercise Available
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -521,13 +570,12 @@ export default async function LessonPage({
               }))
             );
             const allExamples = shuffleExamples(collected);
-            
+
             return allExamples.length > 0 ? (
               <ExampleSentences examples={allExamples} />
             ) : null;
           })()}
         </aside>
-      </main>
     </div>
   );
 }

@@ -2,9 +2,9 @@
 
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Card, CardContent } from "@/components/ui/card"
-import type { Topic } from "@/types/exercises"
-import { useUserProgress } from "@/contexts/UserProgressContext"
+import { Card, CardContent } from "@/shared/components/ui/card"
+import type { Topic } from "@/features/learn/types/exercises"
+import { useUserProgress } from "@/features/learn/contexts/UserProgressContext"
 
 interface TopicCardProps {
   topic: Topic

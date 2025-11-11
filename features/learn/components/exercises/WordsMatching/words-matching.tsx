@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useRef, useEffect, useMemo } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { Card } from "@/shared/components/ui/card"
+import { Button } from "@/shared/components/ui/button"
+import { cn } from "@/shared/utils/cn"
 
 interface WordPair {
   id: number

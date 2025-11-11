@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/shared/components/ui/button"
+import { Card, CardContent } from "@/shared/components/ui/card"
+import { cn } from "@/shared/utils/cn"
+import { Alert, AlertDescription } from "@/shared/components/ui/alert"
 import { CheckCircle, XCircle } from "lucide-react"
+import { normalizeForComparison } from "@/shared/utils/vi-normalize"
 
 export interface ErrorCorrectionItem {
   id: string
@@ -50,14 +51,6 @@ export function ErrorCorrection({
     message: string
   } | null>(null)
 
-  const normalize = (s: string) =>
-    (s || "")
-      .toLowerCase()
-      .normalize("NFC")
-      .replace(/[\p{P}\p{S}]+/gu, "")
-      .replace(/\s+/g, " ")
-      .trim()
-
   const diffWords = (a: string, b: string): Array<{ type: "equal" | "add" | "del"; text: string }> => {
     const A = a.split(/\s+/), B = b.split(/\s+/)
     const dp: number[][] = Array(A.length + 1)
@@ -88,8 +81,10 @@ export function ErrorCorrection({
   }
 
   const handleCheck = () => {
-    const isCorrect = normalize(input) === normalize(target)
-    const diff = diffWords(input, target)
+    // Use Vietnamese normalization that handles diacritics and punctuation
+    const normalizedInput = normalizeForComparison(input)
+    const normalizedTarget = normalizeForComparison(target)
+    const isCorrect = normalizedInput === normalizedTarget
     const message = isCorrect ? "Correct! Great job!" : "Not quite right. Try again!"
 
     if (!controlled) {

@@ -5,9 +5,9 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@/shared/components/ui/tooltip'
 import { Lock, CheckCircle2, Crown } from 'lucide-react'
-import type { LessonUnlockStatus } from '@/lib/lesson-unlock-logic'
+import type { LessonUnlockStatus } from '@/features/learn/utils/lesson-unlock-logic'
 
 interface LessonUnlockTooltipProps {
   unlockStatus: LessonUnlockStatus

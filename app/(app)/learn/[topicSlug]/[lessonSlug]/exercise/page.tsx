@@ -1,8 +1,9 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
-import { ExerciseContainerShell } from "@/components/exercise/ExerciseContainer"
-import type { Exercise } from "@/types/practice"
-import { getExerciseBySlugs } from '@/lib/supabase/practice'
+import { redirect } from 'next/navigation'
+import { ExerciseContainerShell } from "@/features/learn/components/exercises"
+import type { Exercise } from "@/features/learn/types"
+import { getExerciseBySlugs, canAccessExercise } from '@/features/learn/api/practice'
 
 export const revalidate = 1
 
@@ -53,6 +54,20 @@ export default async function ExercisePage(
         <p className="text-xs text-muted-foreground">Xem console server để thấy log từ getLessonIdsBySlugs / getActivePracticeSet / getQuestionsForSet.</p>
       </div>
     )
+  }
+
+  // Check if user can access this exercise page
+  // Allows access if: first time (no sessions) OR has in-progress session
+  // Blocks access if: only has completed sessions (prevents back button to finished exercise)
+  if (session?.user?.id) {
+    const canAccess = await canAccessExercise(exercise.id, session.user.id)
+    if (!canAccess) {
+      console.log('[ExercisePage] Access denied - exercise already completed, redirecting to lesson page')
+      redirect(`/learn/${topicSlug}/${lessonSlug}`)
+    }
+  } else {
+    // No user session, redirect to lesson page
+    redirect(`/learn/${topicSlug}/${lessonSlug}`)
   }
 
   return <ExerciseContainerShell exercise={exercise} topicSlug={topicSlug} lessonSlug={lessonSlug} />

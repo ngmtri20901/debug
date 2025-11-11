@@ -2,9 +2,9 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge"; // added badge import
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { cn } from "@/shared/utils/cn";
+import { Badge } from "@/shared/components/ui/badge"; // added badge import
 
 interface VocabularyItem {
   vi: string;

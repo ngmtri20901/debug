@@ -1,16 +1,17 @@
 "use client"
 
 import { BookOpen, CheckCircle2 } from "lucide-react"
-import { Progress } from "@/components/ui/progress"
-import { useTopicProgressStats } from "@/lib/react-query/hooks/use-lesson-progress"
+import { Progress } from "@/shared/components/ui/progress"
+import { useTopicProgressStats } from "@/features/learn/hooks"
 
 interface TopicProgressStatsProps {
   topicId: number
   totalLessons: number
+  initialProgress?: any[]
 }
 
-export default function TopicProgressStats({ topicId, totalLessons }: TopicProgressStatsProps) {
-  const { completedLessons, isLoading } = useTopicProgressStats(topicId)
+export default function TopicProgressStats({ topicId, totalLessons, initialProgress }: TopicProgressStatsProps) {
+  const { completedLessons, isLoading } = useTopicProgressStats(topicId, initialProgress)
 
   // Calculate correct percentage based on total lessons in topic
   const displayCompleted = completedLessons > 0 ? completedLessons : 0
