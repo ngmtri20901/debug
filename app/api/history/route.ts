@@ -1,0 +1,21 @@
+import { getCachedSession } from '@/features/ai/chat/services/cached-queries';
+import { createClient } from '@/shared/lib/supabase/server';
+
+export async function GET() {
+  const supabase = await createClient();
+  const user = await getCachedSession();
+
+  if (!user) {
+    return Response.json('Unauthorized!', { status: 401 });
+  }
+
+  const { data: chats, error } = await supabase
+    .from('chats')
+    .select()
+    .eq('user_id', user.id!)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  return Response.json(chats);
+}

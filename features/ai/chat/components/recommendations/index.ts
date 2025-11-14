@@ -1,0 +1,1 @@
+export { TopicSearchResults } from './TopicSearchResults';
