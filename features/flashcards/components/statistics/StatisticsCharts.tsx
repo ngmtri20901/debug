@@ -47,8 +47,8 @@ const LearningTrendChart = memo(function LearningTrendChart({ chartData, dataFet
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Daily Review Progress</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-lg md:text-xl">Daily Review Progress</CardTitle>
+        <CardDescription className="text-sm">
           Track your daily flashcard review activity
           {dataFetchResult?.fallbackUsed && (
             <Badge variant="outline" className="ml-2 text-xs">
@@ -57,33 +57,40 @@ const LearningTrendChart = memo(function LearningTrendChart({ chartData, dataFet
           )}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-2 md:px-6">
         {chartData.length > 0 ? (
-          <ChartContainer config={chartConfig} className="h-[300px]">
-            <LineChart data={chartData}>
+          <ChartContainer config={chartConfig} className="h-[250px] md:h-[300px] w-full">
+            <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11 }}
+                angle={-45}
+                textAnchor="end"
+                height={60}
+                interval="preserveStartEnd"
+              />
+              <YAxis tick={{ fontSize: 11 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Line
                 type="monotone"
                 dataKey="flashcards_reviewed"
                 stroke="#007bff"
                 strokeWidth={2}
-                dot={{ fill: "#FFFFFF" }}
+                dot={{ fill: "#FFFFFF", r: 3 }}
               />
               <Line
                 type="monotone"
                 dataKey="correct_answers"
                 stroke="#00FF7F"
                 strokeWidth={2}
-                dot={{ fill: "#FFFFFF" }}
+                dot={{ fill: "#FFFFFF", r: 3 }}
               />
             </LineChart>
           </ChartContainer>
         ) : (
-          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            <p>No data available for the selected time period</p>
+          <div className="flex items-center justify-center h-[250px] md:h-[300px] text-muted-foreground">
+            <p className="text-sm">No data available for the selected time period</p>
           </div>
         )}
       </CardContent>
@@ -95,8 +102,8 @@ const AccuracyChart = memo(function AccuracyChart({ chartData, dataFetchResult }
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Accuracy by Day</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-lg md:text-xl">Accuracy by Day</CardTitle>
+        <CardDescription className="text-sm">
           Monitor your learning accuracy over time
           {dataFetchResult?.fallbackUsed && (
             <Badge variant="outline" className="ml-2 text-xs">
@@ -105,13 +112,20 @@ const AccuracyChart = memo(function AccuracyChart({ chartData, dataFetchResult }
           )}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-2 md:px-6">
         {chartData.length > 0 ? (
-          <ChartContainer config={chartConfig} className="h-[300px]">
-            <BarChart data={chartData}>
+          <ChartContainer config={chartConfig} className="h-[250px] md:h-[300px] w-full">
+            <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis domain={[0, 100]} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11 }}
+                angle={-45}
+                textAnchor="end"
+                height={60}
+                interval="preserveStartEnd"
+              />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Bar
                 dataKey="accuracy_rate"
@@ -121,8 +135,8 @@ const AccuracyChart = memo(function AccuracyChart({ chartData, dataFetchResult }
             </BarChart>
           </ChartContainer>
         ) : (
-          <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-            <p>No data available for the selected time period</p>
+          <div className="flex items-center justify-center h-[250px] md:h-[300px] text-muted-foreground">
+            <p className="text-sm">No data available for the selected time period</p>
           </div>
         )}
       </CardContent>
