@@ -56,9 +56,16 @@ export function DynamicBreadcrumb() {
     const topicId = isTopicPage ? segments[segments.length - 1] : null
     const topicTitle = topicId ? getTopicTitle(topicId) : null
 
+    // Check if we're on an AI chat session page (should hide the session ID)
+    const isAIChatSession = pathname.startsWith('/ai/chat/') && segments.length > 2
+
     // Build path segments
     let currentPath = ''
     segments.forEach((segment, index) => {
+      // Skip the chat session ID segment
+      if (isAIChatSession && index === 2 && segments[0] === 'ai' && segments[1] === 'chat') {
+        return
+      }
       currentPath += `/${segment}`
       const isLast = index === segments.length - 1
       const isTopicSegment = index === segments.length - 2 && isTopicPage // The "topic" segment before the ID
