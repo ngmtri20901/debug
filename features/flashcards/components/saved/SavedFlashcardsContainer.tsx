@@ -588,23 +588,6 @@ export default function SavedFlashcardsContainer({ initialData }: { initialData:
               </Select>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === 'list' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'outline'}
-                size="icon"
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid3x3 className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
         </CardContent>
       </Card>
@@ -613,16 +596,24 @@ export default function SavedFlashcardsContainer({ initialData }: { initialData:
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="all">
-            All ({savedFlashcardsDetails.length})
+            <span className="md:hidden">All</span>
+            <span className="hidden md:inline">All ({savedFlashcardsDetails.length})</span>
           </TabsTrigger>
           <TabsTrigger value="app">
-            App Cards ({appFlashcards.length})
+            <span className="md:hidden">App</span>
+            <span className="hidden md:inline">App Cards ({appFlashcards.length})</span>
           </TabsTrigger>
           <TabsTrigger value="custom">
-            My Cards ({customFlashcards.length})
+            <span className="md:hidden">Custom</span>
+            <span className="hidden md:inline">My Cards ({customFlashcards.length})</span>
           </TabsTrigger>
           <TabsTrigger value="favorites">
-            <Star className="h-4 w-4 mr-1 fill-current" /> Favorites ({favoriteFlashcards.length})
+            <span className="md:hidden flex items-center gap-1">
+              <Star className="h-3 w-3 fill-current" /> Fav
+            </span>
+            <span className="hidden md:flex items-center gap-1">
+              <Star className="h-4 w-4 fill-current" /> Favorites ({favoriteFlashcards.length})
+            </span>
           </TabsTrigger>
         </TabsList>
 
