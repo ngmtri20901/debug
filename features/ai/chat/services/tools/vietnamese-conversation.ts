@@ -22,32 +22,27 @@ type ConversationProps = {
  */
 export const vietnameseConversation = ({ session, dataStream }: ConversationProps) =>
   tool({
-    description: `Start or continue a Vietnamese conversation role-play with a local persona. 
-    
+    description: `Start a Vietnamese conversation role-play with a local persona or evaluate learner's response.
+
     This tool creates immersive language learning scenarios for Vietnamese conversation practice.
-    
+
     **Actions:**
     - 'start': Begin a new conversation scenario
       * Generate a Vietnamese persona (name, role, personality)
       * Create a realistic scenario (location, context, learning objectives)
       * Provide a prompt for the learner's first response
       * After tool completes, YOU (the LLM) must respond with the persona's first Vietnamese dialogue
-    
-    - 'continue': Continue the ongoing conversation
-      * Generate the persona's next Vietnamese response based on learner's input
-      * Maintain character consistency and scenario context
-      * After tool completes, YOU must respond with the persona's Vietnamese dialogue
-    
+
     - 'evaluate': Evaluate the learner's Vietnamese response
       * Provide a score (1-10), feedback, corrections, and suggestions
       * After tool completes, YOU must provide encouraging commentary and explanation
-    
-    **Important:** This tool streams UI components. The actual Vietnamese dialogue and explanations 
+
+    **Important:** This tool streams UI components. The actual Vietnamese dialogue and explanations
     must come from YOU (the LLM) as text responses after the tool executes.`,
     
     inputSchema: z.object({
-      action: z.enum(['start', 'continue', 'evaluate']).describe(
-        "Action to perform: 'start' a new conversation, 'continue' the dialogue, or 'evaluate' learner's response"
+      action: z.enum(['start', 'evaluate']).describe(
+        "Action to perform: 'start' a new conversation or 'evaluate' learner's response"
       ),
       
       // For 'start' action
@@ -70,9 +65,9 @@ export const vietnameseConversation = ({ session, dataStream }: ConversationProp
         "Learning objectives for this conversation (e.g., ['Greet in Vietnamese', 'Order food']). Required for 'start' action."
       ),
       
-      // For prompts (start and continue)
+      // For prompts (start action)
       promptQuestion: z.string().optional().describe(
-        "The prompt question for the learner (e.g., 'How would you greet the café owner?'). Required for 'start' action, optional for 'continue' action."
+        "The prompt question for the learner (e.g., 'How would you greet the café owner?'). Required for 'start' action."
       ),
       promptExpectedLength: z.string().optional().describe(
         "Expected response length (e.g., '1-2 sentences'). Optional."
@@ -187,28 +182,7 @@ export const vietnameseConversation = ({ session, dataStream }: ConversationProp
               message: `Conversation started with ${personaName}. Now respond with the persona's first Vietnamese dialogue.`,
             };
           }
-          
-          case 'continue': {
-            // For continue action, stream a new prompt if provided
-            if (promptQuestion) {
-              dataStream.write({
-                type: "data-conversationUserInputPrompt",
-                data: {
-                  prompt: promptQuestion,
-                  expectedLength: promptExpectedLength || "2-3 sentences",
-                  hints: promptHints || [],
-                },
-              });
-            }
-            
-            return {
-              success: true,
-              conversationId: convId,
-              action: 'continue',
-              message: "Conversation continuing. Now respond with the persona's next Vietnamese dialogue.",
-            };
-          }
-          
+
           case 'evaluate': {
             // Validate required fields for evaluate action
             if (evaluationScore === undefined || !evaluationFeedback) {
