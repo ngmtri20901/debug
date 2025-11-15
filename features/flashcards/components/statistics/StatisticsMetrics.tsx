@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Progress } from "@/shared/components/ui/progress"
 import { TrendingUp, Target, Zap, Award, BookOpen } from "lucide-react"
@@ -19,7 +20,7 @@ interface StatisticsMetricsProps {
   aggregateStats: AggregateStats
 }
 
-export function StatisticsMetrics({ aggregateStats }: StatisticsMetricsProps) {
+export const StatisticsMetrics = memo(function StatisticsMetrics({ aggregateStats }: StatisticsMetricsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       <Card>
@@ -59,4 +60,4 @@ export function StatisticsMetrics({ aggregateStats }: StatisticsMetricsProps) {
       </Card>
     </div>
   )
-}
+})

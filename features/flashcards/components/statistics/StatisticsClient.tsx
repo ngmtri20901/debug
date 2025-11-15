@@ -72,60 +72,53 @@ export default function StatisticsClient() {
   const [error, setError] = useState<string | null>(null)
   const [timeRange, setTimeRange] = useState<"week" | "month">("week")
   const [viewType, setViewType] = useState<"daily" | "weekly" | "monthly">("daily")
+  const [userDataLoaded, setUserDataLoaded] = useState(false)
+  const [isLoadingStats, setIsLoadingStats] = useState(false)
 
   // Set mounted state to prevent hydration mismatch
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Enhanced data fetching with fallback logic
+  // Optimized data fetching with reduced fallback attempts
   const fetchStatisticsWithFallback = async (requestedRange: "week" | "month"): Promise<DataFetchResult> => {
     const timeRangeMapping = {
       week: { days: 7, label: "week" },
       month: { days: 30, label: "month" }
     }
 
-    const fallbackRanges = [
-      { days: timeRangeMapping[requestedRange].days, range: requestedRange, label: timeRangeMapping[requestedRange].label },
-      { days: 30, range: "month" as const, label: "month" },
-      { days: 90, range: "month" as const, label: "3 months" },
-      { days: 999999, range: "all" as const, label: "all time" }
-    ]
+    // Simplified fallback: only try the requested range and "all time" as fallback
+    const requestedDays = timeRangeMapping[requestedRange].days
 
-    // Remove duplicates and ensure we try progressively larger ranges
-    const uniqueRanges = fallbackRanges.filter((range, index, self) =>
-      index === self.findIndex(r => r.days === range.days)
-    ).sort((a, b) => a.days - b.days)
+    try {
+      console.log(`Fetching data for ${requestedDays} days (${requestedRange})...`)
+      const statsData = await getUserDetailedStats(requestedDays)
 
-    for (let i = 0; i < uniqueRanges.length; i++) {
-      const range = uniqueRanges[i]
-
-      try {
-        console.log(`Attempting to fetch data for ${range.days} days (${range.label})...`)
-        const statsData = await getUserDetailedStats(range.days)
-
-        if (statsData && statsData.length > 0) {
-          console.log(`Found ${statsData.length} records in ${range.label} range`)
-
-          const fallbackUsed = range.range !== requestedRange
-          let message = ""
-
-          if (fallbackUsed) {
-            message = `No data found for the selected ${timeRangeMapping[requestedRange].label}. Showing data from the past ${range.label}.`
-          }
-
-          return {
-            data: statsData,
-            actualTimeRange: range.range,
-            requestedTimeRange: requestedRange,
-            fallbackUsed,
-            message
-          }
+      if (statsData && statsData.length > 0) {
+        console.log(`Found ${statsData.length} records in ${requestedRange} range`)
+        return {
+          data: statsData,
+          actualTimeRange: requestedRange,
+          requestedTimeRange: requestedRange,
+          fallbackUsed: false
         }
-      } catch (error) {
-        console.error(`Failed to fetch data for ${range.label}:`, error)
-        continue
       }
+
+      // If no data in requested range, try getting all available data
+      console.log(`No data in ${requestedRange}, trying all time data...`)
+      const allTimeData = await getUserDetailedStats(999999)
+
+      if (allTimeData && allTimeData.length > 0) {
+        return {
+          data: allTimeData,
+          actualTimeRange: "all",
+          requestedTimeRange: requestedRange,
+          fallbackUsed: true,
+          message: `No data found for the selected ${requestedRange}. Showing all available data.`
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to fetch statistics:`, error)
     }
 
     // No data found at all
@@ -138,67 +131,46 @@ export default function StatisticsClient() {
     }
   }
 
-  // Fetch user data and statistics
+  // Fetch user data ONCE on mount
   useEffect(() => {
-    const fetchData = async () => {
-      if (!mounted) return
+    const fetchUserData = async () => {
+      if (!mounted || userDataLoaded) return
 
-      await withLoading(async () => {
+      try {
+        setError(null)
+
+        // Get current user
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+        if (authError) {
+          console.error("Auth error:", authError)
+          setError("Authentication error. Please log in again.")
+          return
+        }
+
+        if (!authUser) {
+          setError("Please log in to view your statistics")
+          return
+        }
+
+        console.log("Authenticated user ID:", authUser.id)
+
+        // Get user profile with improved error handling
         try {
-          setError(null)
+          const { data: userProfiles, error: profileError } = await supabase
+            .from("user_profiles")
+            .select("*")
+            .eq("id", authUser.id)
 
-          // Get current user
-          const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-          if (authError) {
-            console.error("Auth error:", authError)
-            setError("Authentication error. Please log in again.")
-            return
-          }
+          if (profileError) {
+            console.error("Profile fetch error:", profileError)
+            console.error("Error code:", profileError.code)
+            console.error("Error details:", profileError.details)
+            console.error("Error hint:", profileError.hint)
+            console.error("Error message:", profileError.message)
 
-          if (!authUser) {
-            setError("Please log in to view your statistics")
-            return
-          }
-
-          console.log("Authenticated user ID:", authUser.id)
-
-          // Get user profile with improved error handling
-          try {
-            const { data: userProfiles, error: profileError } = await supabase
-              .from("user_profiles")
-              .select("*")
-              .eq("id", authUser.id)
-
-            if (profileError) {
-              console.error("Profile fetch error:", profileError)
-              console.error("Error code:", profileError.code)
-              console.error("Error details:", profileError.details)
-              console.error("Error hint:", profileError.hint)
-              console.error("Error message:", profileError.message)
-
-              // Handle specific error cases
-              if (profileError.code === "PGRST116") {
-                // No rows returned - need to create user profile
-                console.log("No user profile found, creating minimal user data")
-                setUser({
-                  id: authUser.id,
-                  name: authUser.email || "User",
-                  subscription_type: "FREE",
-                  streak_days: 0,
-                  coins: 0
-                })
-              } else {
-                setError(`Profile fetch error: ${profileError.message}`)
-                return
-              }
-            } else if (userProfiles && userProfiles.length > 0) {
-              // Use the first profile if multiple exist
-              setUser(userProfiles[0])
-              if (userProfiles.length > 1) {
-                console.warn("Multiple user profiles found, using the first one")
-              }
-            } else {
-              // No profile found, create minimal user data
+            // Handle specific error cases
+            if (profileError.code === "PGRST116") {
+              // No rows returned - need to create user profile
               console.log("No user profile found, creating minimal user data")
               setUser({
                 id: authUser.id,
@@ -207,10 +179,19 @@ export default function StatisticsClient() {
                 streak_days: 0,
                 coins: 0
               })
+            } else {
+              setError(`Profile fetch error: ${profileError.message}`)
+              return
             }
-          } catch (profileError) {
-            console.error("User profile fetch failed:", profileError)
-            // Use minimal user data
+          } else if (userProfiles && userProfiles.length > 0) {
+            // Use the first profile if multiple exist
+            setUser(userProfiles[0])
+            if (userProfiles.length > 1) {
+              console.warn("Multiple user profiles found, using the first one")
+            }
+          } else {
+            // No profile found, create minimal user data
+            console.log("No user profile found, creating minimal user data")
             setUser({
               id: authUser.id,
               name: authUser.email || "User",
@@ -219,38 +200,63 @@ export default function StatisticsClient() {
               coins: 0
             })
           }
+          setUserDataLoaded(true)
+        } catch (profileError) {
+          console.error("User profile fetch failed:", profileError)
+          // Use minimal user data
+          setUser({
+            id: authUser.id,
+            name: authUser.email || "User",
+            subscription_type: "FREE",
+            streak_days: 0,
+            coins: 0
+          })
+          setUserDataLoaded(true)
+        }
+      } catch (error) {
+        console.error("General error:", error)
+        setError("An unexpected error occurred. Please try again.")
+      }
+    }
 
-          // Get statistics with enhanced fallback logic
-          try {
-            const result = await fetchStatisticsWithFallback(timeRange)
-            setDataFetchResult(result)
-            setStatistics(result.data)
+    fetchUserData()
+  }, [mounted, userDataLoaded])
 
-            // Show user-friendly message if fallback was used
-            if (result.fallbackUsed && result.message) {
-              toast.info(result.message, { duration: 5000 })
-            }
-          } catch (statsError) {
-            console.error("Statistics fetch failed:", statsError)
-            // Set empty result with error message
-            setDataFetchResult({
-              data: [],
-              actualTimeRange: "all",
-              requestedTimeRange: timeRange,
-              fallbackUsed: false,
-              message: "Failed to load statistics. Please try again later."
-            })
-            setStatistics([])
+  // Fetch statistics data when timeRange changes
+  useEffect(() => {
+    const fetchStatisticsData = async () => {
+      if (!mounted || !userDataLoaded || isLoadingStats) return
+
+      setIsLoadingStats(true)
+      await withLoading(async () => {
+        try {
+          const result = await fetchStatisticsWithFallback(timeRange)
+          setDataFetchResult(result)
+          setStatistics(result.data)
+
+          // Show user-friendly message if fallback was used
+          if (result.fallbackUsed && result.message) {
+            toast.info(result.message, { duration: 5000 })
           }
-        } catch (error) {
-          console.error("General error:", error)
-          setError("An unexpected error occurred. Please try again.")
+        } catch (statsError) {
+          console.error("Statistics fetch failed:", statsError)
+          // Set empty result with error message
+          setDataFetchResult({
+            data: [],
+            actualTimeRange: "all",
+            requestedTimeRange: timeRange,
+            fallbackUsed: false,
+            message: "Failed to load statistics. Please try again later."
+          })
+          setStatistics([])
+        } finally {
+          setIsLoadingStats(false)
         }
       })
     }
 
-    fetchData()
-  }, [timeRange, mounted, withLoading])
+    fetchStatisticsData()
+  }, [timeRange, mounted, userDataLoaded])
 
   // Calculate aggregate statistics
   const aggregateStats = useMemo(() => {

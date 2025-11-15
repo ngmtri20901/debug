@@ -502,6 +502,7 @@ function SidebarMenuButton({
   size = "default",
   tooltip,
   className,
+  suppressHydrationWarning,
   ...props
 }: React.ComponentProps<"button"> & {
   asChild?: boolean
@@ -518,6 +519,7 @@ function SidebarMenuButton({
       data-size={size}
       data-active={isActive}
       className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+      suppressHydrationWarning={suppressHydrationWarning ?? asChild}
       {...props}
     />
   )
