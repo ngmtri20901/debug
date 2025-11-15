@@ -4,9 +4,9 @@ import { User } from '@supabase/supabase-js';
 import { isToday, isYesterday, subMonths, subWeeks } from 'date-fns';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import useSWR from 'swr';
+import useSWRInfinite from 'swr/infinite';
 
 // Exported types and helpers referenced by other chat modules
 export type ChatHistory = {
@@ -44,9 +44,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from '@/shared/components/ui/sidebar';
-import { createClient } from '@/lib/supabase/client';
-import { Chat } from '@/lib/db/schema';
-import { TABLES } from '@/lib/db/schema';
+import { createClient } from '@/shared/lib/supabase/client';
+import { Chat } from '@/features/ai/chat/types/db.types';
+import { TABLES } from '@/features/ai/chat/types';
+import { updateChatTitle, deleteChatSession } from '@/app/(app)/ai/chat/actions';
 
 type GroupedChats = {
   today: Chat[];
@@ -56,36 +57,56 @@ type GroupedChats = {
   older: Chat[];
 };
 
-const fetcher = async (userId: string): Promise<Chat[]> => {
-  try {
-    console.log('🔍 Fetcher - userId:', userId, 'table:', TABLES.chats);
-    const supabase = createClient();
-    const { data: chats, error: chatsError } = await supabase
-      .from(TABLES.chats)
-      .select('*')
-      .eq('user_id', userId)
-      .eq('is_active', true)
-      .eq('chat_type', 'chat')
-      .order('created_at', { ascending: false });
+type HistoryResponse = {
+  success: boolean;
+  data: Chat[];
+  count: number;
+  hasMore: boolean;
+  nextCursor: string | null;
+};
 
-    if (chatsError) {
-      console.error('❌ Chats fetch error:', chatsError);
-      return [];
+const fetcher = async (url: string): Promise<HistoryResponse> => {
+  try {
+    console.log('🔍 [Sidebar Fetcher] Fetching chat history:', url);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('❌ [Sidebar Fetcher] API error:', response.status, errorData);
+
+      if (response.status === 401) {
+        console.warn('⚠️ [Sidebar Fetcher] Unauthorized - user may need to log in');
+      }
+
+      return {
+        success: false,
+        data: [],
+        count: 0,
+        hasMore: false,
+        nextCursor: null,
+      };
     }
 
-    console.log('✅ Fetched chats:', chats?.length || 0, 'chats');
-    
-    // Sort by updated_at (or created_at if updated_at is null) on client side
-    const sortedChats = (chats || []).sort((a, b) => {
-      const dateA = new Date(a.updated_at || a.created_at).getTime();
-      const dateB = new Date(b.updated_at || b.created_at).getTime();
-      return dateB - dateA; // Descending order (newest first)
-    });
-    
-    return sortedChats;
+    const result = await response.json();
+    console.log('✅ [Sidebar Fetcher] Successfully fetched', result.data?.length || 0, 'chats');
+
+    return result;
   } catch (error) {
-    console.error('❌ Fetcher error:', error);
-    return [];
+    console.error('❌ [Sidebar Fetcher] Fetch error:', error);
+    return {
+      success: false,
+      data: [],
+      count: 0,
+      hasMore: false,
+      nextCursor: null,
+    };
   }
 };
 
@@ -118,8 +139,7 @@ const ChatItem = ({
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  const handleDeleteClick = (e: Event) => {
-    e.preventDefault();
+  const handleDeleteClick = () => {
     if (isConfirmingDelete) {
       // Second click - confirm delete and close dropdown
       onConfirmDelete(chat.id);
@@ -127,6 +147,7 @@ const ChatItem = ({
     } else {
       // First click - show confirmation state
       onDelete(chat.id);
+      // Keep dropdown open so user can see "Confirm Delete" option
     }
   };
 
@@ -178,7 +199,13 @@ const ChatItem = ({
           </DropdownMenuItem>
           <DropdownMenuItem
             className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
-            onSelect={handleDeleteClick}
+            onSelect={(e) => {
+              // Prevent dropdown from closing on first click
+              if (!isConfirmingDelete) {
+                e.preventDefault();
+              }
+              handleDeleteClick();
+            }}
           >
             {isConfirmingDelete ? (
               <>
@@ -224,21 +251,136 @@ export function SidebarHistory({ user }: { user?: { id: string; email?: string |
     }
   }, [user]);
 
+  const sidebarContentRef = useRef<HTMLDivElement>(null);
+
+  const getKey = (pageIndex: number, previousPageData: HistoryResponse | null) => {
+    if (!clientUser) return null;
+    if (previousPageData && (!previousPageData.hasMore || !previousPageData.nextCursor)) {
+      return null; // No more pages
+    }
+    if (pageIndex === 0) {
+      return `/api/history?chat_type=chat&limit=15`;
+    }
+    // URL encode the cursor to handle special characters
+    const cursor = previousPageData?.nextCursor ? encodeURIComponent(previousPageData.nextCursor) : '';
+    return `/api/history?chat_type=chat&limit=15&cursor=${cursor}`;
+  };
+
   const {
-    data: history,
+    data: pages,
+    error,
     isLoading,
+    size,
+    setSize,
     mutate,
-  } = useSWR<Chat[]>(clientUser ? ['chats', clientUser.id] : null, () => fetcher(clientUser!.id), {
-    fallbackData: [],
-    refreshInterval: 2000, // Refresh every 2 seconds for quicker updates
-    revalidateOnFocus: true,
+  } = useSWRInfinite<HistoryResponse>(getKey, fetcher, {
+    revalidateFirstPage: true,
+    revalidateOnFocus: false,
     revalidateOnReconnect: true,
-    dedupingInterval: 1000, // Allow refetch if more than 1 second has passed
+    dedupingInterval: 2000,
+    onError: (err) => {
+      console.error('❌ [SWR Infinite Error] Failed to fetch chat history:', err);
+    },
   });
 
+  // Flatten all pages into a single array
+  const history = pages?.flatMap((page) => page.data || []) || [];
+  const isLoadingMore = isLoading || (size > 0 && pages && typeof pages[size - 1] === 'undefined');
+  const isEmpty = pages?.[0]?.data?.length === 0;
+  const isReachingEnd = pages && (pages[pages.length - 1]?.hasMore === false || !pages[pages.length - 1]?.nextCursor);
+
+  // Scroll detection for infinite scroll
   useEffect(() => {
+    const sidebarContent = sidebarContentRef.current;
+    if (!sidebarContent || isLoadingMore || isReachingEnd) return;
+
+    // Find the scrollable parent (SidebarContent)
+    let scrollContainer = sidebarContent.parentElement;
+    while (scrollContainer && !scrollContainer.classList.contains('overflow-y-auto') && !scrollContainer.classList.contains('overflow-auto')) {
+      scrollContainer = scrollContainer.parentElement;
+    }
+    
+    // Fallback to sidebarContent itself if no scrollable parent found
+    const targetElement = scrollContainer || sidebarContent;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = targetElement;
+      // Load more when user scrolls to within 200px of the bottom
+      if (scrollHeight - scrollTop - clientHeight < 200) {
+        setSize((prevSize) => prevSize + 1);
+      }
+    };
+
+    targetElement.addEventListener('scroll', handleScroll);
+    return () => targetElement.removeEventListener('scroll', handleScroll);
+  }, [isLoadingMore, isReachingEnd, setSize]);
+
+  useEffect(() => {
+    // Revalidate when pathname changes
     mutate();
   }, [pathname, mutate]);
+
+  // Realtime subscription for new chats and title updates
+  useEffect(() => {
+    if (!clientUser?.id) return;
+
+    const supabase = createClient();
+
+    console.log('🔴 [Realtime] Setting up subscription for chat_sessions');
+
+    const channel = supabase
+      .channel('chat_sessions_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: TABLES.chats,
+          filter: `user_id=eq.${clientUser.id}`,
+        },
+        (payload) => {
+          console.log('✅ [Realtime] New chat created:', payload.new);
+          // Revalidate to fetch the new chat
+          mutate();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: TABLES.chats,
+          filter: `user_id=eq.${clientUser.id}`,
+        },
+        (payload) => {
+          console.log('✅ [Realtime] Chat updated:', payload.new);
+          // Optimistically update the local data
+          mutate(
+            (currentPages) => {
+              if (!currentPages) return currentPages;
+
+              return currentPages.map((page) => ({
+                ...page,
+                data: page.data.map((chat) =>
+                chat.id === (payload.new as any).id
+                  ? { ...chat, ...(payload.new as Chat) }
+                  : chat
+                ),
+              }));
+            },
+            { revalidate: false }
+          );
+        }
+      )
+      .subscribe((status) => {
+        console.log('🔴 [Realtime] Subscription status:', status);
+      });
+
+    return () => {
+      console.log('🔴 [Realtime] Cleaning up subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [clientUser?.id, mutate]);
 
   const router = useRouter();
 
@@ -256,25 +398,49 @@ export function SidebarHistory({ user }: { user?: { id: string; email?: string |
       return;
     }
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from(TABLES.chats)
-      .update({ 
-        title: editedTitle.trim(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', editingId);
+    const newTitle = editedTitle.trim();
+    const chatId = editingId;
 
-    if (error) {
-      console.error('❌ Error updating chat title:', error);
-      toast.error('Failed to update chat title');
-    } else {
-      toast.success('Chat title updated');
-      mutate(); // Refresh the chat list
-    }
+    // Optimistic update - immediately update UI before server response
+    mutate(
+      async (currentPages) => {
+        if (!currentPages) return currentPages;
 
+        // Update the title optimistically in the local data
+        return currentPages.map((page) => ({
+          ...page,
+          data: page.data.map((chat) =>
+          chat.id === chatId
+            ? { ...chat, title: newTitle, updated_at: new Date().toISOString() }
+            : chat
+          ),
+        }));
+      },
+      {
+        // Don't revalidate immediately to show optimistic update
+        revalidate: false,
+      }
+    );
+
+    // Clear editing state immediately for better UX
     setEditingId(null);
     setEditedTitle('');
+
+    try {
+      // Call server action to persist the change
+      await updateChatTitle({ chatId, title: newTitle });
+
+      toast.success('Chat title updated');
+
+      // Revalidate after successful update
+      mutate();
+    } catch (error) {
+      console.error('❌ Error updating chat title:', error);
+      toast.error('Failed to update chat title');
+
+      // Revert optimistic update on error
+      mutate();
+    }
   };
 
   const handleEditCancel = () => {
@@ -292,31 +458,49 @@ export function SidebarHistory({ user }: { user?: { id: string; email?: string |
   };
 
   const handleConfirmDelete = async (chatId: string) => {
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from(TABLES.chats)
-        .update({ is_active: false })
-        .eq('id', chatId);
+    console.log('🗑️ [Delete] Starting delete for chat:', chatId);
 
-      if (error) {
-        console.error('❌ Error deleting chat:', error);
-        toast.error('Failed to delete chat');
-      } else {
-        toast.success('Chat deleted successfully');
-        mutate(); // Refresh the chat list
-        
-        // If we're deleting the currently active chat, redirect to chat page
-        if (chatId === id) {
-          router.push('/ai/chat');
-        }
+    // Optimistic update - immediately remove from UI
+    mutate(
+      async (currentPages) => {
+        if (!currentPages) return currentPages;
+
+        // Filter out the deleted chat from all pages
+        return currentPages.map((page) => ({
+          ...page,
+          data: page.data.filter((chat) => chat.id !== chatId),
+        }));
+      },
+      {
+        // Don't revalidate immediately to show optimistic update
+        revalidate: false,
       }
-    } catch (error) {
-      console.error('❌ Error deleting chat:', error);
-      toast.error('Failed to delete chat');
-    }
+    );
 
+    // Clear confirmation state immediately
     setConfirmingDeleteId(null);
+
+    try {
+      // Call server action to persist the change
+      await deleteChatSession({ chatId });
+
+      console.log('✅ [Delete] Chat deleted successfully:', chatId);
+      toast.success('Chat deleted successfully');
+
+      // If we're deleting the currently active chat, redirect to chat page
+      if (chatId === id) {
+        router.push('/ai/chat');
+      }
+
+      // Revalidate after successful delete
+      mutate();
+    } catch (error) {
+      console.error('❌ [Delete] Error deleting chat:', error);
+      toast.error('Failed to delete chat');
+
+      // Revert optimistic update on error
+      mutate();
+    }
   };
 
   if (!clientUser) {
@@ -345,7 +529,7 @@ export function SidebarHistory({ user }: { user?: { id: string; email?: string |
                 className="rounded-md h-8 flex gap-2 px-2 items-center"
               >
                 <div
-                  className="h-4 rounded-md flex-1 max-w-[--skeleton-width] bg-sidebar-accent-foreground/10"
+                  className="h-4 rounded-md flex-1 max-w-[--skeleton-width] bg-sidebar-accent-foreground/10 animate-pulse"
                   style={
                     {
                       '--skeleton-width': `${item}%`,
@@ -354,6 +538,29 @@ export function SidebarHistory({ user }: { user?: { id: string; email?: string |
                 />
               </div>
             ))}
+          </div>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  }
+
+  if (error) {
+    return (
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <div className="flex flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+            <div className="text-destructive text-sm font-medium">
+              Failed to load chat history
+            </div>
+            <div className="text-xs text-muted-foreground">
+              {error?.message || 'An unexpected error occurred'}
+            </div>
+            <button
+              onClick={() => mutate()}
+              className="mt-2 px-3 py-1.5 text-xs rounded-md bg-sidebar-accent hover:bg-sidebar-accent/80 transition-colors"
+            >
+              Try Again
+            </button>
           </div>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -411,7 +618,7 @@ export function SidebarHistory({ user }: { user?: { id: string; email?: string |
   return (
     <>
       <SidebarGroup>
-        <SidebarGroupContent>
+        <SidebarGroupContent ref={sidebarContentRef} className="overflow-y-auto">
           <SidebarMenu>
             {history &&
               (() => {
@@ -546,6 +753,16 @@ export function SidebarHistory({ user }: { user?: { id: string; email?: string |
                   </>
                 );
               })()}
+            {isLoadingMore && (
+              <div className="px-2 py-2">
+                <div className="text-xs text-muted-foreground text-center">Loading more...</div>
+              </div>
+            )}
+            {isReachingEnd && history.length > 0 && (
+              <div className="px-2 py-2">
+                <div className="text-xs text-muted-foreground text-center">No more chats</div>
+              </div>
+            )}
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>

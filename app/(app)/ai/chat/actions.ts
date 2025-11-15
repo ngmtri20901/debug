@@ -45,16 +45,54 @@ function fallbackTitleFromFirstUserMessage(message: UIMessage): string {
   }
 }
 
+// Helper function to clean AI-generated titles from special tokens and artifacts
+function cleanTitleArtifacts(title: string): string {
+  let cleaned = title;
+
+  // Remove common AI tokenization artifacts and special tokens
+  const tokensToRemove = [
+    /<\|begin▁of▁sentence\|>/gi,
+    /<\|end▁of▁sentence\|>/gi,
+    /<\|begin_of_text\|>/gi,
+    /<\|end_of_text\|>/gi,
+    /<\|im_start\|>/gi,
+    /<\|im_end\|>/gi,
+    /<s>/gi,
+    /<\/s>/gi,
+    /\[INST\]/gi,
+    /\[\/INST\]/gi,
+    /<<SYS>>/gi,
+    /<\/SYS>>/gi,
+  ];
+
+  tokensToRemove.forEach(token => {
+    cleaned = cleaned.replace(token, '');
+  });
+
+  // Remove any remaining angle bracket patterns that look like special tokens
+  // Pattern: <|anything|> or <anything>
+  cleaned = cleaned.replace(/<\|[^|]+\|>/g, '');
+  cleaned = cleaned.replace(/<[^>]+>/g, '');
+
+  // Remove quotes at the beginning and end
+  cleaned = cleaned.replace(/^["']|["']$/g, '');
+
+  // Clean up extra whitespace
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+  return cleaned;
+}
+
 export async function generateTitleFromUserMessage({
   message,
 }: {
   message: UIMessage;
 }) {
   try {
-    const { text: title } = await generateText({
+    const { text: rawTitle } = await generateText({
       model: myProvider.languageModel("title-model"),
       system: `Generate a concise chat title from the user's first message.
-    
+
 STRICT RULES:
 - MAXIMUM 5 WORDS ONLY - NO MORE!
 - MAXIMUM 50 CHARACTERS TOTAL
@@ -62,6 +100,8 @@ STRICT RULES:
 - Capture the main topic/intent
 - Use title case
 - If the topic is complex, use the most important keyword
+- DO NOT include any special tokens, XML tags, or markup in your response
+- Return ONLY plain text title
 
 Examples:
 "Tell me about Vietnamese grammar" → "Vietnamese Grammar Guide"
@@ -69,24 +109,34 @@ Examples:
 "Help me learn conversation" → "Conversation Practice"
 "Show me folk songs about family" → "Family Folk Songs"
 
-RESPOND WITH ONLY THE TITLE - NO EXPLANATIONS!`,
+RESPOND WITH ONLY THE TITLE - NO EXPLANATIONS, NO SPECIAL TOKENS!`,
       prompt: JSON.stringify(message),
       maxRetries: 2, // Retry up to 2 times on transient failures
     });
 
+    // Clean up any AI artifacts and special tokens
+    const cleanedTitle = cleanTitleArtifacts(rawTitle);
+
     // Safety fallback: Truncate if still too long
-    const safeTitle = title.slice(0, 50).trim();
-    return safeTitle || fallbackTitleFromFirstUserMessage(message);
+    const safeTitle = cleanedTitle.slice(0, 50).trim();
+
+    // If cleaning removed everything or title is too short, use fallback
+    if (!safeTitle || safeTitle.length < 3) {
+      console.warn('Title too short after cleaning, using fallback:', rawTitle);
+      return fallbackTitleFromFirstUserMessage(message);
+    }
+
+    return safeTitle;
   } catch (error: any) {
     console.warn('Title generation failed, using fallback:', error?.message || error);
-    
+
     // Check if it's a 502 upstream error - common with AI providers
-    if (error?.message?.includes('502') || 
+    if (error?.message?.includes('502') ||
         error?.message?.includes('Upstream error') ||
         error?.message?.includes('Invalid JSON response')) {
       console.warn('AI provider experiencing issues (502), using fallback title');
     }
-    
+
     // Always return a valid title using fallback
     return fallbackTitleFromFirstUserMessage(message);
   }
@@ -107,6 +157,58 @@ export async function updateChatVisibility({
   chatId: string;
 }) {
   await updateChatVisiblityById({ chatId, visibility: "private" });
+}
+
+export async function updateChatTitle({
+  chatId,
+  title,
+}: {
+  chatId: string;
+  title: string;
+}) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("chat_sessions")
+    .update({
+      title: title.trim(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", chatId)
+    .select("id, title, updated_at")
+    .single();
+
+  if (error) {
+    console.error("[updateChatTitle] Error updating chat title:", error);
+    throw new Error("Failed to update chat title");
+  }
+
+  return data;
+}
+
+export async function deleteChatSession({
+  chatId,
+}: {
+  chatId: string;
+}) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("chat_sessions")
+    .update({
+      is_active: false,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", chatId)
+    .select("id, is_active")
+    .single();
+
+  if (error) {
+    console.error("[deleteChatSession] Error deleting chat:", error);
+    throw new Error("Failed to delete chat");
+  }
+
+  return data;
 }
 
 // ============================================

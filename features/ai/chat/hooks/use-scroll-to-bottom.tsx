@@ -6,7 +6,7 @@ type ScrollFlag = ScrollBehavior | false;
 export function useScrollToBottom() {
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
-  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isAtBottom, setIsAtBottom] = useState(false);
 
   const { data: scrollBehavior = false, mutate: setScrollBehavior } =
     useSWR<ScrollFlag>("messages:should-scroll", null, { fallbackData: false });
@@ -17,8 +17,10 @@ export function useScrollToBottom() {
     }
     const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
 
-    // Check if we are within 100px of the bottom (like v0 does)
-    setIsAtBottom(scrollTop + clientHeight >= scrollHeight - 100);
+    // Check if we are within 50px of the bottom
+    const threshold = 50;
+    const isNearBottom = scrollTop + clientHeight >= scrollHeight - threshold;
+    setIsAtBottom(isNearBottom);
   }, []);
 
   useEffect(() => {

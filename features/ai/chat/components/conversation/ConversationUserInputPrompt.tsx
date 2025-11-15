@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { HelpCircleIcon, InfoIcon } from "lucide-react";
-import type { ConversationUserInputPrompt } from "@/lib/chat/types";
+import type { ConversationUserInputPrompt } from "@/features/ai/chat/types";
 
 interface ConversationUserInputPromptProps {
   prompt: ConversationUserInputPrompt;

@@ -5,7 +5,7 @@ import {
   executeSQLQuery, 
   explainQuery, 
   generateChartConfig 
-} from '@/app/(dashboard)/ai/chat/actions';
+} from '@/app/(app)/ai/chat/actions';
 import type { ChatMessage } from '../../types';
 import type { ServerUser } from '@/shared/lib/supabase/auth';
 

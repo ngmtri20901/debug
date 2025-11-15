@@ -3,7 +3,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { motion } from "framer-motion";
 import { memo } from "react";
-import { BookOpen, Sparkles } from "lucide-react";
+import { MessageSquare, BookCheck, Compass, Search } from "lucide-react";
 import type { ChatMessage } from "@/features/ai/chat/types";
 import { Suggestion } from "@/features/ai/chat/components/elements/suggestion";
 import { cn } from "@/shared/utils/cn";
@@ -16,28 +16,28 @@ type SuggestedActionsProps = {
 function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
   const suggestedActions = [
     {
-      text: "Explain Vietnamese sentence structure and word order",
-      icon: BookOpen,
+      text: "Start a role-play conversation about ordering food",
+      icon: MessageSquare,
+      color: "blue",
+      category: "roleplay",
+    },
+    {
+      text: "Check my Vietnamese grammar for mistakes",
+      icon: BookCheck,
       color: "purple",
-      category: "grammar",
+      category: "grammar_check",
     },
     {
-      text: "Find proverbs about perseverance and hard work",
-      icon: Sparkles,
-      color: "amber",
-      category: "folklore",
+      text: "Recommend Vietnamese learning topics related to travel",
+      icon: Compass,
+      color: "emerald",
+      category: "topic_recommendation",
     },
     {
-      text: "What are classifiers in Vietnamese grammar?",
-      icon: BookOpen,
-      color: "purple",
-      category: "grammar",
-    },
-    {
-      text: "Show me folk songs about family and filial piety",
-      icon: Sparkles,
-      color: "amber",
-      category: "folklore",
+      text: "Search for recent events happening in Ho Chi Minh City",
+      icon: Search,
+      color: "rose",
+      category: "local_events",
     },
   ];
 
@@ -45,6 +45,7 @@ function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
     <div
       className="grid w-full gap-2 sm:grid-cols-2"
       data-testid="suggested-actions"
+      suppressHydrationWarning
     >
       {suggestedActions.map((action, index) => {
         const Icon = action.icon;

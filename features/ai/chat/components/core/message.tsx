@@ -18,7 +18,7 @@ import {
   ToolInput,
   ToolOutput,
 } from "../elements/tool";
-import { SparklesIcon } from "./icons";
+import { SparklesIcon } from "@/features/ai/chat/components/core/icons";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
@@ -32,7 +32,7 @@ import {
   ConversationUserInputPrompt as ConversationUserInputPromptComponent
 } from "../conversation";
 import { TopicSearchResults } from "../recommendations";
-import { Weather } from "../weather";
+import { Weather } from "@/features/ai/chat/components/elements/weather";
 
 const PurePreviewMessage = ({
   chatId,

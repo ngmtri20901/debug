@@ -6,8 +6,8 @@ import {
   type EditorView,
 } from "prosemirror-view";
 import { createRoot } from "react-dom/client";
-import type { ArtifactKind } from "@/components/ai/chat/artifact";
-import { Suggestion as PreviewSuggestion } from "@/components/ai/chat/suggestion";
+import type { ArtifactKind } from "@/features/ai/chat/components/artifact/artifact";
+import { Suggestion as PreviewSuggestion } from "@/features/ai/chat/components/artifact/suggestion";
 import type { Suggestion } from "../../types";
 
 export interface UISuggestion extends Suggestion {

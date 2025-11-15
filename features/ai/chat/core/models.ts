@@ -1,21 +1,28 @@
+import type { ComponentType } from "react";
+import { SparklesIcon } from "@/features/ai/chat/components/core/icons";
+import { CpuIcon } from "@/features/ai/chat/components/core/icons";
+
 export const DEFAULT_CHAT_MODEL: string = "chat-model";
 
 export type ChatModel = {
   id: string;
   name: string;
   description: string;
+  icon: ComponentType<{ size?: number }>;
 };
 
 export const chatModels: ChatModel[] = [
   {
     id: "chat-model",
-    name: "DeepSeek V3.1",
-    description: "DeepSeek's advanced model with fast processing",
+    name: "Friendly Tutor",
+    description: "A friendly tutor that gives quick, simple, and easy-to-understand explanations.",
+    icon: SparklesIcon,
   },
   {
     id: "chat-model-reasoning",
-    name: "DeepSeek-r1t2-chimera",
+    name: "Insightful Tutor",
     description:
-      "DeepSeek's advanced reasoning model with enhanced chain-of-thought capabilities",
+      "An analytical tutor that provides deeper reasoning and detailed grammar insights.",
+    icon: CpuIcon,
   },
 ];

@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useMemo, useOptimistic, useState } from "react";
-import { saveChatModelAsCookie } from "@/app/(dashboard)/ai/chat/actions";
+import { saveChatModelAsCookie } from "@/app/(app)/ai/chat/actions";
 import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -12,7 +12,7 @@ import {
 import { entitlementsByUserType, type UserType } from "@/features/ai/chat/core/entitlements";
 import { chatModels } from "@/features/ai/chat/core/models";
 import { cn } from "@/features/ai/chat/utils";
-import { CheckCircleFillIcon, ChevronDownIcon } from "../core/icons";
+import { ChevronDownIcon } from "../core/icons";
 import { useUserProfile } from "@/shared/hooks/use-user-profile";
 
 export function ModelSelector({
@@ -76,7 +76,7 @@ export function ModelSelector({
         className="min-w-[280px] max-w-[90vw] sm:min-w-[300px]"
       >
         {availableChatModels.map((chatModel) => {
-          const { id } = chatModel;
+          const { id, icon: ModelIcon } = chatModel;
 
           return (
             <DropdownMenuItem
@@ -105,7 +105,7 @@ export function ModelSelector({
                 </div>
 
                 <div className="shrink-0 text-foreground opacity-0 group-data-[active=true]/item:opacity-100 dark:text-foreground">
-                  <CheckCircleFillIcon />
+                  <ModelIcon size={16} />
                 </div>
               </button>
             </DropdownMenuItem>

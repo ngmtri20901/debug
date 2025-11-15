@@ -2,7 +2,7 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type { ArtifactKind } from "@/features/ai/chat/components/artifact";
 type VisibilityType = "private" | "public";
-import { ChatSDKError } from "../types";
+import { ChatSDKError } from "../types/error.types";
 import type { AppUsage } from "../types/usage.types";
 import { generateUUID } from "../utils";
 import { TABLES } from "../types";

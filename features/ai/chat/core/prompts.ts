@@ -45,19 +45,28 @@ export const regularPrompt =
   "You are a friendly assistant! Keep your responses concise and helpful.";
 
 export type RequestHints = {
-  latitude: Geo["latitude"];
-  longitude: Geo["longitude"];
-  city: Geo["city"];
-  country: Geo["country"];
+  latitude: Geo["latitude"] | number;
+  longitude: Geo["longitude"] | number;
+  city?: Geo["city"] | string | null;
+  country?: Geo["country"] | string | null;
 };
 
-export const getRequestPromptFromHints = (requestHints: RequestHints) => `\
-About the origin of user's request:
-- lat: ${requestHints.latitude}
-- lon: ${requestHints.longitude}
-- city: ${requestHints.city}
-- country: ${requestHints.country}
-`;
+export const getRequestPromptFromHints = (requestHints: RequestHints) => {
+  const parts = [
+    `About the origin of user's request:`,
+    `- lat: ${requestHints.latitude}`,
+    `- lon: ${requestHints.longitude}`,
+  ];
+  
+  if (requestHints.city) {
+    parts.push(`- city: ${requestHints.city}`);
+  }
+  if (requestHints.country) {
+    parts.push(`- country: ${requestHints.country}`);
+  }
+  
+  return parts.join('\n');
+};
 
 export const systemPrompt = ({
   selectedChatModel,
@@ -70,12 +79,13 @@ export const systemPrompt = ({
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const timePrompt = currentTime ? `Current datetime: ${currentTime} (Asia/Ho_Chi_Minh). Treat this as "now" for all reasoning and tool usage.` : '';
+  const weatherPrompt = getWeatherToolPrompt(requestHints);
 
   if (selectedChatModel === "chat-model-reasoning") {
-    return `${regularPrompt}\n\n${requestPrompt}${timePrompt ? `\n\n${timePrompt}` : ''}`;
+    return `${regularPrompt}\n\n${requestPrompt}\n\n${weatherPrompt}${timePrompt ? `\n\n${timePrompt}` : ''}`;
   }
 
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}\n\n${vietnameseConversationPrompt}\n\n${vietnameseRAGPrompt}${timePrompt ? `\n\n${timePrompt}` : ''}`;
+  return `${regularPrompt}\n\n${requestPrompt}\n\n${weatherPrompt}\n\n${artifactsPrompt}\n\n${vietnameseConversationPrompt}\n\n${vietnameseRAGPrompt}${timePrompt ? `\n\n${timePrompt}` : ''}`;
 };
 
 
@@ -124,6 +134,33 @@ Always structure Vietnamese dialogue as:
 
 Be warm, encouraging, and culturally authentic. Make the learner feel comfortable practicing Vietnamese! 
 If the conversation is end, ask the user whether to start a new conversation or get feedback (evaluation tool)
+`;
+
+export const getWeatherToolPrompt = (requestHints: RequestHints) => `
+You have access to the getWeather tool to get current weather information.
+
+**When to use getWeather:**
+- User asks about current weather, temperature, or weather conditions
+- User asks "what's the weather?" or "how's the weather?"
+- User wants weather information for their location or a specific location
+
+**How to use getWeather:**
+- The tool requires latitude and longitude coordinates
+- You have access to the user's approximate location via request hints (lat/lon)
+- Use the coordinates from request hints: latitude ${requestHints.latitude}, longitude ${requestHints.longitude}
+- If user asks about a specific city/location, you can use well-known coordinates or ask for them
+- The tool returns current temperature, hourly forecast, and daily sunrise/sunset times
+
+**Important:**
+- ALWAYS use the coordinates provided in the request hints when user asks about weather at their location
+- The coordinates are already available - you don't need to ask the user for them
+- Simply call getWeather with the latitude and longitude from the request hints
+- If the user asks about weather in a different location, you may need to look up coordinates or ask the user
+
+**Example usage:**
+- User: "What's the weather?" → Use getWeather with lat: ${requestHints.latitude}, lon: ${requestHints.longitude}
+- User: "How hot is it today?" → Use getWeather with the provided coordinates
+- User: "Weather in HCMC" → You can use coordinates for Ho Chi Minh City (approximately 10.8231, 106.6297)
 `;
 
 export const vietnameseRAGPrompt = `

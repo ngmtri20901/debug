@@ -5,9 +5,20 @@ import { DataStreamHandler } from "@/features/ai/chat/components/core/data-strea
 import { DEFAULT_CHAT_MODEL } from "@/features/ai/chat/core/models";
 import { generateUUID } from "@/features/ai/chat/utils";
 import { getUserOrNull } from "@/shared/lib/supabase/auth";
+import { ensureUserProfile } from "@/features/ai/chat/services/queries";
 
 export default async function Page() {
   const user = await getUserOrNull();
+
+  // Ensure user profile exists in database
+  if (user?.id) {
+    try {
+      await ensureUserProfile(user.id, user.email);
+    } catch (error) {
+      console.error("Failed to ensure user profile:", error);
+    }
+  }
+
   const id = generateUUID();
 
   const cookieStore = await cookies();

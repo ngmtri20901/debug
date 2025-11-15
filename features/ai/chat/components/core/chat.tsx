@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
+import { useGeolocation } from "@/shared/hooks/use-geolocation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,7 +21,7 @@ import { useArtifactSelector } from "@/features/ai/chat/hooks/use-artifact";
 import { useAutoResume } from "@/features/ai/chat/hooks/use-auto-resume";
 import type { Vote } from "@/features/ai/chat/types/db.types";
 import { ChatSDKError } from "@/features/ai/chat/types/error.types";
-import type { Attachment, ChatMessage, AppUsage } from "@/features/ai/chat/types";
+import type { ChatMessage, AppUsage } from "@/features/ai/chat/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/features/ai/chat/utils";
 import { Artifact } from "../artifact";
 import { useDataStream } from "./data-stream-provider";
@@ -55,10 +56,27 @@ export function Chat({
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
+  
+  // Get browser geolocation for accurate weather queries
+  const { location: browserLocation, requestLocation } = useGeolocation();
+  const hasRequestedLocation = useRef(false);
 
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
+
+  // Auto-request location when user sends a message that might need weather
+  useEffect(() => {
+    if (input && !browserLocation && !hasRequestedLocation.current) {
+      const lowerInput = input.toLowerCase();
+      const weatherKeywords = ['weather', 'temperature', 'hot', 'cold', 'rain', 'sunny', 'cloudy', 'forecast'];
+      if (weatherKeywords.some(keyword => lowerInput.includes(keyword))) {
+        console.log('[Chat] Weather-related query detected, requesting location...');
+        requestLocation();
+        hasRequestedLocation.current = true;
+      }
+    }
+  }, [input, browserLocation, requestLocation]);
 
   const {
     messages,
@@ -77,12 +95,35 @@ export function Chat({
       api: "/api/chat",
       fetch: fetchWithErrorHandlers,
       prepareSendMessagesRequest(request) {
+        // Check if message is about weather and request location if not already available
+        const lastMessage = request.messages.at(-1);
+        if (lastMessage && !browserLocation) {
+          const messageText = lastMessage.parts
+            ?.filter((part) => part.type === 'text')
+            .map((part) => 'text' in part ? part.text : '')
+            .join(' ')
+            .toLowerCase() || '';
+          const weatherKeywords = ['weather', 'temperature', 'hot', 'cold', 'rain', 'sunny', 'cloudy', 'forecast'];
+          if (weatherKeywords.some(keyword => messageText.includes(keyword))) {
+            console.log('[Chat] Weather query detected in message, requesting location...');
+            requestLocation();
+          }
+        }
+
         return {
           body: {
             id: request.id,
-            message: request.messages.at(-1),
+            message: lastMessage,
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibilityType,
+            // Include browser geolocation if available (more accurate than IP-based)
+            ...(browserLocation && {
+              browserGeolocation: {
+                latitude: browserLocation.latitude,
+                longitude: browserLocation.longitude,
+                accuracy: browserLocation.accuracy,
+              },
+            }),
             ...request.body,
           },
         };
@@ -133,7 +174,6 @@ export function Chat({
     fetcher
   );
 
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
 
   useAutoResume({
@@ -145,8 +185,8 @@ export function Chat({
 
   return (
     <>
-      <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
-
+      <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background relative">
+        <div className="flex-1 overflow-y-auto">
         <Messages
           chatId={id}
           isArtifactVisible={isArtifactVisible}
@@ -158,30 +198,30 @@ export function Chat({
           status={status}
           votes={votes}
         />
+        </div>
 
-        <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex w-full flex-col gap-4 px-2 pb-3 md:px-4 md:pb-4 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
           {!isReadonly && (
+            <div className="pointer-events-auto mx-auto w-full max-w-4xl">
             <MultimodalInput
-              attachments={attachments}
               chatId={id}
               input={input}
               messages={messages}
               onModelChange={setCurrentModelId}
               selectedModelId={currentModelId}
               sendMessage={sendMessage}
-              setAttachments={setAttachments}
               setInput={setInput}
               setMessages={setMessages}
               status={status}
               stop={stop}
               usage={usage}
             />
+            </div>
           )}
         </div>
       </div>
 
       <Artifact
-        attachments={attachments}
         chatId={id}
         input={input}
         isReadonly={isReadonly}
@@ -189,7 +229,6 @@ export function Chat({
         regenerate={regenerate}
         selectedModelId={currentModelId}
         sendMessage={sendMessage}
-        setAttachments={setAttachments}
         setInput={setInput}
         setMessages={setMessages}
         status={status}

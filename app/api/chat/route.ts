@@ -19,7 +19,7 @@ import { getUsage } from "@tokenlens/helpers";
 import { getUserOrNull } from "@/shared/lib/supabase/auth";
 import { entitlementsByUserType, type UserType } from "@/features/ai/chat/core";
 import type { ChatModel } from "@/features/ai/chat/core/models";
-import { type RequestHints, systemPrompt } from "@/features/ai/chat/core/prompts";
+import { type RequestHints, systemPrompt, nowInVN } from "@/features/ai/chat/core/prompts";
 import { myProvider } from "@/features/ai/chat/core";
 import { createDocument, getWeather, requestSuggestions, updateDocument, vietnameseRAG, vietnameseConversation, tavilySearch, databaseQueryTool, topicRecommendationTool } from "@/features/ai/chat/services/tools";
 import { isProductionEnvironment } from "@/features/ai/chat/utils/constants";
@@ -33,12 +33,11 @@ import {
   saveChat,
   saveMessages,
   updateChatLastContextById,
-} from "@/lib/db/queries";
-import { ChatSDKError } from "@/lib/chat/errors";
-import type { ChatMessage } from "@/lib/chat/types";
-import type { AppUsage } from "@/lib/chat/usage";
-import { convertToUIMessages, generateUUID } from "@/lib/chat/utils";
-import { generateTitleFromUserMessage } from "@/app/(dashboard)/ai/chat/actions";
+} from "@/features/ai/chat/services/queries";
+import { ChatSDKError } from "@/features/ai/chat/types/error.types";
+import type { ChatMessage, AppUsage } from "@/features/ai/chat/types";
+import { convertToUIMessages, generateUUID } from "@/features/ai/chat/utils";
+import { generateTitleFromUserMessage } from "@/app/(app)/ai/chat/actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
 export const maxDuration = 60;
@@ -96,10 +95,12 @@ export async function POST(request: Request) {
       id,
       message,
       selectedChatModel,
+      browserGeolocation,
     }: {
       id: string;
       message: ChatMessage;
       selectedChatModel: ChatModel["id"];
+      browserGeolocation?: { latitude: number; longitude: number; accuracy?: number };
     } = requestBody;
 
     const user = await getUserOrNull();
@@ -151,14 +152,28 @@ export async function POST(request: Request) {
     const messagesFromDb = await getMessagesByChatId({ id });
     const uiMessages = [...convertToUIMessages(messagesFromDb as any), message];
 
-    const { longitude, latitude, city, country } = geolocation(request);
+    // Use browser geolocation if available (more accurate), otherwise fall back to IP-based
+    const { longitude: ipLongitude, latitude: ipLatitude, city, country } = geolocation(request);
+    
+    // Prioritize browser geolocation over IP-based geolocation
+    const latitude = browserGeolocation?.latitude ?? ipLatitude;
+    const longitude = browserGeolocation?.longitude ?? ipLongitude;
 
     const requestHints: RequestHints = {
       longitude,
       latitude,
+      city: browserGeolocation ? undefined : city, // City is only available from IP geolocation
+      country: browserGeolocation ? undefined : country, // Country is only available from IP geolocation
+    };
+
+    console.log('[Chat API] Using geolocation:', {
+      source: browserGeolocation ? 'browser' : 'ip',
+      latitude,
+      longitude,
+      accuracy: browserGeolocation?.accuracy,
       city,
       country,
-    };
+    });
 
     // Get current message count to calculate proper message_order
     const existingMessages = await getMessagesByChatId({ id });
@@ -189,7 +204,7 @@ export async function POST(request: Request) {
       execute: ({ writer: dataStream }: any) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({ selectedChatModel, requestHints, currentTime: nowInVN() }),
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:

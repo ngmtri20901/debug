@@ -15,7 +15,7 @@ import { useDebounceCallback, useWindowSize } from "usehooks-ts";
 import { textArtifact } from "../../artifacts/text/client";
 import { useArtifact } from "@/features/ai/chat/hooks/use-artifact";
 import type { Document, Vote } from "@/features/ai/chat/types";
-import type { Attachment, ChatMessage } from "@/features/ai/chat/types";
+import type { ChatMessage } from "@/features/ai/chat/types";
 import { fetcher } from "@/features/ai/chat/utils";
 import { ArtifactActions } from "./artifact-actions";
 import { ArtifactCloseButton } from "./artifact-close-button";
@@ -51,8 +51,6 @@ function PureArtifact({
   setInput,
   status,
   stop,
-  attachments,
-  setAttachments,
   sendMessage,
   messages,
   setMessages,
@@ -66,8 +64,6 @@ function PureArtifact({
   setInput: Dispatch<SetStateAction<string>>;
   status: UseChatHelpers<ChatMessage>["status"];
   stop: UseChatHelpers<ChatMessage>["stop"];
-  attachments: Attachment[];
-  setAttachments: Dispatch<SetStateAction<Attachment[]>>;
   messages: ChatMessage[];
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   votes: Vote[] | undefined;
@@ -323,14 +319,12 @@ function PureArtifact({
 
                 <div className="relative flex w-full flex-row items-end gap-2 px-4 pb-4">
                   <MultimodalInput
-                    attachments={attachments}
                     chatId={chatId}
                     className="bg-background dark:bg-muted"
                     input={input}
                     messages={messages}
                     selectedModelId={selectedModelId}
                     sendMessage={sendMessage}
-                    setAttachments={setAttachments}
                     setInput={setInput}
                     setMessages={setMessages}
                     status={status}

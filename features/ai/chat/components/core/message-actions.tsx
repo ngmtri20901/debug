@@ -74,7 +74,12 @@ export function PureMessageActions({
 
       <Action
         data-testid="message-upvote"
-        disabled={vote?.isUpvoted}
+        disabled={vote?.is_upvoted === true}
+        className={
+          vote?.is_upvoted === true
+            ? "bg-green-500/20 text-green-600 hover:bg-green-500/30 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+            : ""
+        }
         onClick={() => {
           const upvote = fetch("/api/vote", {
             method: "PATCH",
@@ -96,15 +101,16 @@ export function PureMessageActions({
                   }
 
                   const votesWithoutCurrent = currentVotes.filter(
-                    (currentVote) => currentVote.messageId !== message.id
+                    (currentVote) => currentVote.message_id !== message.id
                   );
 
                   return [
                     ...votesWithoutCurrent,
                     {
-                      chatId,
-                      messageId: message.id,
-                      isUpvoted: true,
+                      chat_id: chatId,
+                      message_id: message.id,
+                      is_upvoted: true,
+                      created_at: new Date().toISOString(),
                     },
                   ];
                 },
@@ -123,7 +129,12 @@ export function PureMessageActions({
 
       <Action
         data-testid="message-downvote"
-        disabled={vote && !vote.isUpvoted}
+        disabled={vote?.is_upvoted === false}
+        className={
+          vote?.is_upvoted === false
+            ? "bg-red-500/20 text-red-600 hover:bg-red-500/30 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+            : ""
+        }
         onClick={() => {
           const downvote = fetch("/api/vote", {
             method: "PATCH",
@@ -151,9 +162,10 @@ export function PureMessageActions({
                   return [
                     ...votesWithoutCurrent,
                     {
-                      chatId,
-                      messageId: message.id,
-                      isUpvoted: false,
+                      chat_id: chatId,
+                      message_id: message.id,
+                      is_upvoted: false,
+                      created_at: new Date().toISOString(),
                     },
                   ];
                 },
