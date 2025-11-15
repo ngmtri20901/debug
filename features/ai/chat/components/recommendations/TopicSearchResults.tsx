@@ -228,7 +228,7 @@ export function TopicSearchResults({ data }: TopicSearchResultsProps) {
                     className="w-full group/button"
                     size="lg"
                   >
-                    <Link href={`/learn/${topic.slug}`} target="_blank" rel="noopener noreferrer">
+                    <Link href={`/learn/${topic.slug}`}>
                       <span>Explore Topic</span>
                       <ArrowRight className="w-4 h-4 ml-2 group-hover/button:translate-x-1 transition-transform" />
                     </Link>

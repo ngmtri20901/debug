@@ -6,20 +6,18 @@ import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/features/ai/chat/types/db.types";
 import type { ChatMessage } from "@/features/ai/chat/types";
 import { Action, Actions } from "../elements/actions";
-import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "../core/icons";
+import { CopyIcon, ThumbDownIcon, ThumbUpIcon } from "../core/icons";
 
 export function PureMessageActions({
   chatId,
   message,
   vote,
   isLoading,
-  setMode,
 }: {
   chatId: string;
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
-  setMode?: (mode: "view" | "edit") => void;
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -44,24 +42,13 @@ export function PureMessageActions({
     toast.success("Copied to clipboard!");
   };
 
-  // User messages get edit (on hover) and copy actions
+  // User messages get copy action
   if (message.role === "user") {
     return (
       <Actions className="-mr-0.5 justify-end">
-        <div className="relative">
-          {setMode && (
-            <Action
-              className="-left-10 absolute top-0 opacity-0 transition-opacity group-hover/message:opacity-100"
-              onClick={() => setMode("edit")}
-              tooltip="Edit"
-            >
-              <PencilEditIcon />
-            </Action>
-          )}
-          <Action onClick={handleCopy} tooltip="Copy">
-            <CopyIcon />
-          </Action>
-        </div>
+        <Action onClick={handleCopy} tooltip="Copy">
+          <CopyIcon />
+        </Action>
       </Actions>
     );
   }
