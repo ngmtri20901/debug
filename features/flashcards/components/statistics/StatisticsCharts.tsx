@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
 import {
@@ -42,7 +43,7 @@ const chartConfig = {
   },
 }
 
-function LearningTrendChart({ chartData, dataFetchResult }: { chartData: any[], dataFetchResult: DataFetchResult | null }) {
+const LearningTrendChart = memo(function LearningTrendChart({ chartData, dataFetchResult }: { chartData: any[], dataFetchResult: DataFetchResult | null }) {
   return (
     <Card>
       <CardHeader>
@@ -88,9 +89,9 @@ function LearningTrendChart({ chartData, dataFetchResult }: { chartData: any[], 
       </CardContent>
     </Card>
   )
-}
+})
 
-function AccuracyChart({ chartData, dataFetchResult }: { chartData: any[], dataFetchResult: DataFetchResult | null }) {
+const AccuracyChart = memo(function AccuracyChart({ chartData, dataFetchResult }: { chartData: any[], dataFetchResult: DataFetchResult | null }) {
   return (
     <Card>
       <CardHeader>
@@ -127,13 +128,13 @@ function AccuracyChart({ chartData, dataFetchResult }: { chartData: any[], dataF
       </CardContent>
     </Card>
   )
-}
+})
 
-export function StatisticsCharts({ chartData, dataFetchResult, timeRange }: StatisticsChartsProps) {
+export const StatisticsCharts = memo(function StatisticsCharts({ chartData, dataFetchResult, timeRange }: StatisticsChartsProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       <LearningTrendChart chartData={chartData} dataFetchResult={dataFetchResult} />
       <AccuracyChart chartData={chartData} dataFetchResult={dataFetchResult} />
     </div>
   )
-}
+})
