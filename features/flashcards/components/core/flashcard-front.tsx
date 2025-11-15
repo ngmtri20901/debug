@@ -142,7 +142,7 @@ export function FlashcardFront({ data, saved, onSave }: FlashcardFrontProps) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto bg-white rounded-3xl p-8 shadow-lg border border-gray-200">
+    <div className="w-full max-w-2xl mx-auto bg-white rounded-3xl p-4 md:p-8 shadow-lg border border-gray-200">
       {/* Save button */}
       <div className="flex justify-end mb-4">
         <Button variant="ghost" size="sm" onClick={handleSave} className="p-2 hover:bg-gray-100">
@@ -150,14 +150,14 @@ export function FlashcardFront({ data, saved, onSave }: FlashcardFrontProps) {
         </Button>
       </div>
 
-      <div className="flex gap-8 h-full">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-8 h-full">
         {/* Image section */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 w-full md:w-auto flex justify-center md:justify-start">
           {data.image_url ? (
             <img
               src={data.image_url}
               alt={data.vietnamese}
-              className="w-48 h-48 object-cover rounded-xl border-2 border-gray-200"
+              className="w-full max-w-xs md:w-48 h-48 object-cover rounded-xl border-2 border-gray-200"
               loading="lazy"
               onError={(e) => {
                 // Fallback to placeholder if image fails to load
@@ -166,7 +166,7 @@ export function FlashcardFront({ data, saved, onSave }: FlashcardFrontProps) {
               }}
             />
           ) : (
-            <div className="w-48 h-48 bg-gray-100 rounded-xl border-2 border-gray-200 flex items-center justify-center">
+            <div className="w-full max-w-xs md:w-48 h-48 bg-gray-100 rounded-xl border-2 border-gray-200 flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <div className="text-4xl mb-2">📚</div>
                 <div className="text-sm">No image</div>
@@ -176,14 +176,14 @@ export function FlashcardFront({ data, saved, onSave }: FlashcardFrontProps) {
         </div>
 
         {/* Content section */}
-        <div className="flex-1 flex flex-col justify-center space-y-6">
+        <div className="flex-1 flex flex-col justify-center space-y-4 md:space-y-6">
           {/* Vietnamese word and audio */}
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col">
-              <h2 className="text-4xl font-bold text-gray-800">{data.vietnamese}</h2>
+          <div className="flex items-center gap-3 md:gap-4">
+            <div className="flex flex-col flex-1">
+              <h2 className="text-2xl md:text-4xl font-bold text-gray-800 break-words">{data.vietnamese}</h2>
               {/* IPA Pronunciation display */}
               {data.pronunciation && (
-                <p className="text-lg text-gray-500 mt-1 font-mono">
+                <p className="text-base md:text-lg text-gray-500 mt-1 font-mono">
                   /{data.pronunciation}/
                 </p>
               )}
@@ -195,16 +195,16 @@ export function FlashcardFront({ data, saved, onSave }: FlashcardFrontProps) {
                 e.stopPropagation()
                 playAudio()
               }}
-              className={`p-3 hover:bg-gray-100 rounded-full ${isPlayingAudio ? 'animate-pulse bg-blue-100' : ''}`}
+              className={`p-2 md:p-3 hover:bg-gray-100 rounded-full flex-shrink-0 ${isPlayingAudio ? 'animate-pulse bg-blue-100' : ''}`}
               disabled={isPlayingAudio}
               title={isPlayingAudio ? "Playing audio..." : "Play pronunciation"}
             >
-              <Volume2 className={`h-6 w-6 ${isPlayingAudio ? 'text-blue-700' : 'text-blue-600'}`} />
+              <Volume2 className={`h-5 w-5 md:h-6 md:w-6 ${isPlayingAudio ? 'text-blue-700' : 'text-blue-600'}`} />
             </Button>
           </div>
 
           {/* Word type and badges */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="secondary" className="bg-blue-100 text-blue-800">
               {formatWordType(data.type)}
             </Badge>
@@ -220,7 +220,7 @@ export function FlashcardFront({ data, saved, onSave }: FlashcardFrontProps) {
           {data.vietnamese_sentence ? (
             <div className="space-y-1">
               <p className="text-sm text-gray-500 font-medium">Example sentence:</p>
-              <p className="text-md md:text-lg text-gray-700 italic">
+              <p className="text-base md:text-lg text-gray-700 italic break-words">
                 <span className="text-gray-400">"</span>
                 {highlightTermInSentence(data.vietnamese_sentence, data.vietnamese)}
                 <span className="text-gray-400">"</span>
@@ -242,7 +242,7 @@ export function FlashcardFront({ data, saved, onSave }: FlashcardFrontProps) {
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" align="start">
-                        <p className="text-sm text-gray-700 italic">"{data.english_sentence}"</p>
+                        <p className="text-sm text-gray-700 italic break-words">"{data.english_sentence}"</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -252,7 +252,7 @@ export function FlashcardFront({ data, saved, onSave }: FlashcardFrontProps) {
           ) : (
             <div className="space-y-1">
               <p className="text-sm text-gray-500 font-medium">Example sentence:</p>
-              <p className="text-md md:text-lg text-gray-400 italic">
+              <p className="text-base md:text-lg text-gray-400 italic">
                 No example sentence available
               </p>
             </div>
