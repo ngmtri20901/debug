@@ -124,3 +124,18 @@ export interface ExampleSentence {
   highlighted_words?: string[]
   audio_url?: string
 }
+
+// User lesson progress tracking (from database)
+export interface UserLessonProgress {
+  id: string
+  user_id: string
+  lesson_id: number
+  topic_id: number
+  best_score_percent: number
+  total_attempts: number
+  pass_threshold: number
+  status: 'not_started' | 'in_progress' | 'passed'
+  first_attempted_at: string | null
+  last_attempted_at: string | null
+  passed_at: string | null
+}

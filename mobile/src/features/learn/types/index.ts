@@ -48,3 +48,25 @@ export type {
   SessionResults,
   CompletionResponse,
 } from './practice'
+
+// API types
+export type {
+  ZoneRow,
+  TopicRow,
+  LessonRow,
+  MaterialRow,
+  PracticeSetRow,
+  QuestionRow,
+  PracticeSetQuestionRow,
+  PracticeResultRow,
+  UserLessonProgressRow,
+  ZoneWithTopicsResponse,
+  TopicWithLessonsResponse,
+  LessonWithMaterialsResponse,
+  ExerciseWithQuestionsResponse,
+  SubmitExerciseParams,
+  SubmitExerciseResponse,
+  ZoneCompletionStats,
+  TopicProgressSummary,
+  ZoneProgressSummary,
+} from './api'
