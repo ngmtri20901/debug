@@ -95,34 +95,51 @@ mobile/
 - [x] audioService.ts (audio playback service)
 - [x] Unit tests for utilities
 
-### 🔄 Stage 4: React Hooks Layer (Days 4-6) - NEXT
-- [ ] useRandomFlashcards (with caching)
-- [ ] useSavedFlashcards (with Supabase)
-- [ ] useFlashcardReview (review session state)
-- [ ] useCardFlip (flip animation)
-- [ ] useCardSwipe (swipe gestures)
+### ✅ Stage 4: React Hooks Layer (Days 5-6) - COMPLETE
+- [x] useRandomFlashcards (with caching)
+- [x] useSavedFlashcards (with Supabase)
+- [x] useFlashcardReview (review session state)
+- [x] useCardFlip (flip animation - NEW)
+- [x] useCardSwipe (swipe gestures - NEW)
+- [x] Comprehensive test suite (54 tests)
+
+### 🔄 Stage 5: Browse & Display Features (Days 7-10) - NEXT
+UI implementation starts here:
+- Daily Practice Screen (with flip/swipe animations)
+- Browse Topics Screen
+- Topic Flashcards Screen
+- Saved Flashcards Screen
 
 ### ⏳ Upcoming Stages
 
-5. **Stage 5**: Browse & Display Features (Days 7-10)
 6. **Stage 6**: Review Session Feature (Days 11-14)
 7. **Stage 7**: Statistics Feature (Days 15-16)
 
-## Key Files (Stage 1)
+## Key Files
 
-### Types (Reused from Web)
+### Stage 1: Foundation
 - `src/features/flashcards/types/flashcard.types.ts` - Flashcard data structures
 - `src/features/flashcards/types/session.types.ts` - Review session types
-
-### Utilities
 - `src/features/flashcards/utils/apiClient.ts` - API client (adapted for RN)
-- `src/features/flashcards/utils/transformers.ts` - Data transformers (reused)
+- `src/features/flashcards/utils/transformers.ts` - Data transformers
 
-### Configuration
-- `package.json` - Dependencies
-- `tsconfig.json` - TypeScript config
-- `.env.example` - Environment variables template
-- `src/env.d.ts` - Environment type definitions
+### Stage 2: API Services
+- `src/features/flashcards/services/flashcardService.ts` - 25+ API methods
+- `src/features/flashcards/services/sessions.ts` - Session validation
+- `src/features/flashcards/services/statisticsService.ts` - Stats tracking
+- `src/shared/lib/supabase/client.ts` - Supabase mobile client
+
+### Stage 3: Utilities
+- `src/features/flashcards/utils/daily-cache.ts` - Daily flashcard caching
+- `src/shared/utils/storage.ts` - Generic AsyncStorage wrapper
+- `src/features/flashcards/services/audioService.ts` - Audio playback
+
+### Stage 4: React Hooks
+- `src/features/flashcards/hooks/useRandomFlashcards.ts` - Random flashcards with cache
+- `src/features/flashcards/hooks/useSavedFlashcards.ts` - Save/bookmark management
+- `src/features/flashcards/hooks/useFlashcardReview.ts` - Review session logic
+- `src/features/flashcards/hooks/useCardFlip.ts` - Flip animation (NEW)
+- `src/features/flashcards/hooks/useCardSwipe.ts` - Swipe gestures (NEW)
 
 ## Notes
 
