@@ -73,26 +73,37 @@ mobile/
 └── tsconfig.json
 ```
 
-## Stage 1: Foundation (Current)
+## Development Progress
 
-✅ Completed:
+### ✅ Stage 1: Foundation & Core Types (Days 1-2) - COMPLETE
 - [x] Folder structure setup
 - [x] TypeScript types (flashcard.types.ts, session.types.ts)
 - [x] API client adapted for React Native
 - [x] Data transformers
 - [x] Environment configuration
 
-🔄 Next:
-- [ ] Test API connectivity
-- [ ] Setup Supabase client for mobile
-- [ ] Implement AsyncStorage utilities
+### ✅ Stage 2: API Service Layer (Days 2-3) - COMPLETE
+- [x] flashcardService.ts (25+ API methods)
+- [x] sessions.ts (session validation & generation)
+- [x] statisticsService.ts (stats tracking)
+- [x] Supabase client for React Native
+- [x] Unit tests for services
 
-## Development Stages
+### ✅ Stage 3: Data Utilities & Caching (Day 3) - COMPLETE
+- [x] daily-cache.ts (AsyncStorage adaptation)
+- [x] storage.ts (generic AsyncStorage wrapper)
+- [x] audioService.ts (audio playback service)
+- [x] Unit tests for utilities
 
-1. **Stage 1**: Foundation & Core Types (Days 1-2) ✅ Current
-2. **Stage 2**: API Service Layer (Days 2-3)
-3. **Stage 3**: Data Utilities & Caching (Day 3)
-4. **Stage 4**: React Hooks Layer (Days 4-6)
+### 🔄 Stage 4: React Hooks Layer (Days 4-6) - NEXT
+- [ ] useRandomFlashcards (with caching)
+- [ ] useSavedFlashcards (with Supabase)
+- [ ] useFlashcardReview (review session state)
+- [ ] useCardFlip (flip animation)
+- [ ] useCardSwipe (swipe gestures)
+
+### ⏳ Upcoming Stages
+
 5. **Stage 5**: Browse & Display Features (Days 7-10)
 6. **Stage 6**: Review Session Feature (Days 11-14)
 7. **Stage 7**: Statistics Feature (Days 15-16)
